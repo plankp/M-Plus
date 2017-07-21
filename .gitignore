@@ -1,0 +1,6 @@
+mplus
+*.exe
+*.o
+*.stackdump
+*.swp
+*~
