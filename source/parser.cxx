@@ -436,18 +436,27 @@ parse_if_expr (parser_info &src)
   return parse_primitive(src);
 }
 
+static const std::vector<mp_token_t::tok_type> impl_produce
+{
+  mp_token_t::Y_YIELD, mp_token_t::Y_MACRO
+};
+
 std::unique_ptr<syntree::ast>
 parse_primitive (parser_info &src)
 {
   // = NUMBER
   // | ATOM
-  // | IDENT '->' expression
+  // | IDENT <<produce>> expression
   // | IDENT
-  // | '(' ')' '->' expression
-  // | '(' <<params>> ')' '->' expression
+  // | '(' ')' <<produce>> expression
+  // | '(' <<params>> ')' <<produce>> expression
   // | '(' expression ')'
   // | '[' argument_list ']'
   // | '[' ']'
+  //
+  // <<produce>>
+  // = '->'
+  // | '=>'
   //
   // <<params>>
   // = IDENT
@@ -470,7 +479,7 @@ parse_primitive (parser_info &src)
     {
       if (optional(src, { mp_token_t::P_RPAREN }))
 	{
-	  mp_token_t op = one_of(src, { mp_token_t::Y_YIELD });
+	  mp_token_t op = one_of(src, impl_produce);
 	  return std::unique_ptr<syntree::binop>(new syntree::binop(op, nullptr, parse_expression(src)));
 	}
       // Assume it is a function
@@ -486,7 +495,7 @@ parse_primitive (parser_info &src)
 	      do ps.push_back(one_of(src, { mp_token_t::L_IDENT }));
 	      while (optional(src, { mp_token_t::Y_COMMA }));
 	      one_of(src, { mp_token_t::P_RPAREN });
-	      mp_token_t op = one_of(src, { mp_token_t::Y_YIELD });
+	      mp_token_t op = one_of(src, impl_produce);
 
 	      auto tree = parse_expression(src);
 	      for (size_t i = ps.size(); i > 0; --i)
@@ -498,7 +507,7 @@ parse_primitive (parser_info &src)
 	  if (optional(src, { mp_token_t::P_RPAREN }))
 	    {
 	      mp_token_t op;
-	      if (optional(src, { mp_token_t::Y_YIELD }, op))
+	      if (optional(src, impl_produce, op))
 		{
 		  // Has to be a function in form of (a) -> <<expr>>
 		  return std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::token>(new syntree::token(p)), { parse_expression(src) }));
@@ -519,7 +528,7 @@ parse_primitive (parser_info &src)
   if (optional(src, { mp_token_t::L_IDENT }, tok))
     {
       mp_token_t op;
-      if (optional(src, { mp_token_t::Y_YIELD }, op))
+      if (optional(src, impl_produce, op))
 	{
 	  return std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::token>(new syntree::token(tok)), { parse_expression(src) }));
 	}

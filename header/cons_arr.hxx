@@ -14,6 +14,7 @@ namespace syntree
     ~cons_arr() = default;
 
     virtual void accept(visitor &v);
+    virtual std::string type_name(void) const;
   };
 };
 

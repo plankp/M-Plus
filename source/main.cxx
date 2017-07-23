@@ -13,6 +13,7 @@ main (int argc, char **argv)
       // Parser example
       std::stringstream s;
       s << "f = x -> x + 2 * -3^2;\n"
+	<< "let = (bind, val, body) => ((bind -> body)(val));\n"
 	<< "f(10);\n"
 	<< "do\n"
 	<< "  10 + 2 * -3^2 : f(a, b, c) : &&a() : nil;\n"

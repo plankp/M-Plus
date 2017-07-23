@@ -26,6 +26,7 @@ namespace syntree
     size_t size(void) const;
 
     virtual void accept(visitor &vis);
+    virtual std::string type_name(void) const;
 
     friend void swap(syntree::expressions &a, syntree::expressions &b);
   };

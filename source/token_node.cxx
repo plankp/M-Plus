@@ -41,6 +41,12 @@ namespace syntree
     v.visit_token(*this);
   }
 
+  std::string
+  token::type_name(void) const
+  {
+    return "token";
+  }
+
   void
   swap(syntree::token &a, syntree::token &b)
   {

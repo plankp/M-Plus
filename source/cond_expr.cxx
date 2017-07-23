@@ -62,6 +62,12 @@ namespace syntree
     v.visit_cond_expr(*this);
   }
 
+  std::string
+  cond_expr::type_name(void) const
+  {
+    return "cond_expr";
+  }
+
   void
   swap(syntree::cond_expr &a, syntree::cond_expr &b)
   {

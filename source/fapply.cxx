@@ -43,6 +43,12 @@ namespace syntree
     v.visit_fapply(*this);
   }
 
+  std::string
+  fapply::type_name(void) const
+  {
+    return "fapply";
+  }
+
   void
   swap(syntree::fapply &a, syntree::fapply &b)
   {

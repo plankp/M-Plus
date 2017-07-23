@@ -42,6 +42,12 @@ namespace syntree
     v.visit_binop(*this);
   }
 
+  std::string
+  binop::type_name(void) const
+  {
+    return "binop";
+  }
+
   void
   swap(syntree::binop &a, syntree::binop &b)
   {

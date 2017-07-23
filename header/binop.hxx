@@ -29,6 +29,7 @@ namespace syntree
     std::shared_ptr<ast> get_rhs(void);
 
     virtual void accept(visitor &v);
+    virtual std::string type_name(void) const;
 
     friend void swap(syntree::binop &a, syntree::binop &b);
   };

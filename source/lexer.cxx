@@ -261,23 +261,34 @@ next_token (istream_wrapper &src)
 	case '=':
 	  {
 	    const int ch = src.get();
-	    if (ch == '=')
-	      return (mp_token_t)
-		{
-		  .type = mp_token_t::Y_EQL,
-		    .line_num = src.get_line_num(),
-		    .col_num = src.get_col_num(),
-		    .text = "=="
-		    };
-
-	    src.unget(ch);
-	    return (mp_token_t)
+	    switch (ch)
 	      {
-		.type = mp_token_t::Y_DECL,
-		  .line_num = src.get_line_num(),
-		  .col_num = src.get_col_num(),
-		  .text = "="
-		  };
+	      case '=':
+		return (mp_token_t)
+		  {
+		    .type = mp_token_t::Y_EQL,
+		      .line_num = src.get_line_num(),
+		      .col_num = src.get_col_num(),
+		      .text = "=="
+		      };
+	      case '>':
+		return (mp_token_t)
+		  {
+		    .type = mp_token_t::Y_MACRO,
+		      .line_num = src.get_line_num(),
+		      .col_num = src.get_col_num(),
+		      .text = "=>"
+		      };
+	      default:
+		src.unget(ch);
+		return (mp_token_t)
+		  {
+		    .type = mp_token_t::Y_DECL,
+		      .line_num = src.get_line_num(),
+		      .col_num = src.get_col_num(),
+		      .text = "="
+		      };
+	      }
 	  }
 	case '>':
 	  {

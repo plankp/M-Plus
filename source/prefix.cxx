@@ -43,6 +43,12 @@ namespace syntree
     v.visit_prefix(*this);
   }
 
+  std::string
+  prefix::type_name(void) const
+  {
+    return "prefix";
+  }
+
   void
   swap(syntree::prefix &a, syntree::prefix &b)
   {

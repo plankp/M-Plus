@@ -46,6 +46,7 @@
   X(Y_SET)					\
   X(Y_DECL)					\
   X(Y_YIELD)					\
+  X(Y_MACRO)					\
   X(Y_LT)					\
   X(Y_GT)					\
   X(Y_LE)					\

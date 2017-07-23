@@ -33,6 +33,7 @@ namespace syntree
     std::shared_ptr<syntree::ast> get_else(void);
     
     virtual void accept(visitor &v);
+    virtual std::string type_name(void) const;
 
     friend void swap(syntree::cond_expr &a, syntree::cond_expr &b);
   };

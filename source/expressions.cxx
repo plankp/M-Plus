@@ -53,6 +53,12 @@ namespace syntree
     v.visit_expressions(*this);
   }
 
+  std::string
+  expressions::type_name(void) const
+  {
+    return "expressions";
+  }
+
   void
   swap(syntree::expressions &a, syntree::expressions &b)
   {

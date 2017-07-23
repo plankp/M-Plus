@@ -24,6 +24,7 @@ namespace syntree
     mp_token_t get_token(void);
     
     virtual void accept(visitor &v);
+    virtual std::string type_name(void) const;
 
     friend void swap(syntree::token& a, syntree::token &b);
   };

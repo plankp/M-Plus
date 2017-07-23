@@ -43,6 +43,12 @@ namespace syntree
     v.visit_postfix(*this);
   }
 
+  std::string
+  postfix::type_name(void) const
+  {
+    return "postfix";
+  }
+
   void
   swap(syntree::postfix &a, syntree::postfix &b)
   {
