@@ -22,12 +22,12 @@ public:
 
   virtual void visit_num(syntree::num &num);
   virtual void visit_atom(syntree::atom &atom);
+  virtual void visit_array(syntree::array &array);
   virtual void visit_binop(syntree::binop &binop);
   virtual void visit_ident(syntree::ident &ident);
   virtual void visit_fapply(syntree::fapply &fapply);
   virtual void visit_prefix(syntree::prefix &prefix);
   virtual void visit_postfix(syntree::postfix &postfix);
-  virtual void visit_cons_arr(syntree::cons_arr &cons_arr);
   virtual void visit_cond_expr(syntree::cond_expr &cond_expr);
   virtual void visit_expressions(syntree::expressions &expressions);
 };

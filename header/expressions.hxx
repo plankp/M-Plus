@@ -13,6 +13,7 @@ namespace syntree
   {
   private:
     std::vector<std::shared_ptr<ast>> exprs;
+
   public:
     expressions(std::vector<std::shared_ptr<ast>> exprs = {});
     expressions(const syntree::expressions &ref);

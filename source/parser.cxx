@@ -463,15 +463,14 @@ parse_primitive (parser_info &src)
   // | IDENT ',' <<params>>
   if (optional(src, { mp_token_t::P_LSQUARE }))
     {
-      if (optional(src, { mp_token_t::P_RSQUARE })) return std::unique_ptr<syntree::cons_arr>(new syntree::cons_arr);
+      if (optional(src, { mp_token_t::P_RSQUARE })) return std::unique_ptr<syntree::array>(new syntree::array);
       auto datum = parse_argument_list(src);
       
       mp_token_t tok = one_of(src, { mp_token_t::P_RSQUARE });
-      auto tree = std::unique_ptr<syntree::ast>(new syntree::cons_arr);
+      auto tree = std::unique_ptr<syntree::array>(new syntree::array);
       for (size_t i = datum->size(); i > 0; --i)
 	{
-	  // [1, 2, 3] => 1:(2:(3:[]))
-	  tree = std::unique_ptr<syntree::binop>(new syntree::binop((mp_token_t) { .type = mp_token_t::Y_COLON, .line_num = tok.line_num, .col_num = tok.col_num, .text = ":" }, (*datum)[i - 1], { std::move(tree) }));
+	  tree->push_front((*datum)[i - 1]);
 	}
       return tree;
     }

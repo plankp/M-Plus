@@ -4,11 +4,11 @@
 #include "lexer.hxx"
 #include "visitor.hxx"
 
+#include "array.hxx"
 #include "binop.hxx"
 #include "fapply.hxx"
 #include "prefix.hxx"
 #include "postfix.hxx"
-#include "cons_arr.hxx"
 #include "num_node.hxx"
 #include "atom_node.hxx"
 #include "cond_expr.hxx"

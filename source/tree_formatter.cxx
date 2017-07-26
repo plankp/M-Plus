@@ -149,9 +149,13 @@ tree_formatter::visit_ident(syntree::ident &ident)
 }
 
 void
-tree_formatter::visit_cons_arr(syntree::cons_arr &cons_arr)
+tree_formatter::visit_array(syntree::array &array)
 {
-  sstr << '[' << ']';
+  for (size_t i = 0; i < array.size(); ++i)
+    {
+      sstr << array[i]->to_str() << ':';
+    }
+  sstr << "[]";
 }
 
 void
