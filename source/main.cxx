@@ -34,6 +34,23 @@ main (int argc, char **argv)
       tree_formatter formatter;
       formatter.visit(*parse(info));
       std::cout << formatter.get_text() << std::endl;
+
+      // Evaluator example
+      std::stringstream code;
+      code << "((b) -> () -> do a = { @a if b, @\"\" else }; a end)(1)()";
+      istream_wrapper wrap1(code);
+      parser_info info1(wrap1);
+      std::map<std::string, std::shared_ptr<rt::mp_value>> env =
+	{
+	  // Start off with nothing declared
+	  // (here is where stuff like print and read goes)
+	};
+      auto tree = parse(info1);
+      formatter.reset();
+      formatter.visit(*tree);
+      std::cout << "\nEval demo:" << std::endl
+       		<< formatter.get_text() << std::endl;
+      std::cout << tree->eval(env)->to_str() << std::endl;
     }
   catch (std::exception &err)
     {

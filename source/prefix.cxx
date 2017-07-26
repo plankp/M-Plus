@@ -49,6 +49,24 @@ namespace syntree
     return "prefix";
   }
 
+  std::unique_ptr<rt::mp_value>
+  prefix::eval(env_t env)
+  {
+    return base->eval(env)->send(env, op.text, nullptr);
+  }
+
+  std::unique_ptr<rt::mp_value>
+  prefix::clone(void) const
+  {
+    return std::unique_ptr<rt::mp_value>(new prefix(op, base));
+  }
+
+  std::unique_ptr<rt::mp_value>
+  prefix::send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param)
+  {
+    return eval(env)->send(env, msg, std::move(param));
+  }
+
   void
   swap(syntree::prefix &a, syntree::prefix &b)
   {

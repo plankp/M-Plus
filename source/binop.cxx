@@ -48,6 +48,32 @@ namespace syntree
     return "binop";
   }
 
+  std::unique_ptr<rt::mp_value>
+  binop::eval(env_t env)
+  {
+    // Intercept special messages first!
+    if (op.text == "if")
+      {
+	if (lhs->eval(env)->is_truthy()) return rhs->eval(env);
+	return nullptr;
+      }
+
+    // Have lhs handle other messages
+    return lhs->send(env, op.text, rhs->clone());
+  }
+
+  std::unique_ptr<rt::mp_value>
+  binop::clone(void) const
+  {
+    return std::unique_ptr<rt::mp_value>(new binop(op, lhs, rhs));
+  }
+
+  std::unique_ptr<rt::mp_value>
+  binop::send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param)
+  {
+    return eval(env)->send(env, msg, std::move(param));
+  }
+
   void
   swap(syntree::binop &a, syntree::binop &b)
   {

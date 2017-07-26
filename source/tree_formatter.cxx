@@ -31,6 +31,25 @@ tree_formatter::newline(void)
 }
 
 void
+tree_formatter::reset(void)
+{
+  sstr.str("");
+  indent_level = 0;
+}
+
+void
+tree_formatter::visit_num(syntree::num &num)
+{
+  sstr << to_string(num.get_token());
+}
+
+void
+tree_formatter::visit_atom(syntree::atom &atom)
+{
+  sstr << to_string(atom.get_token());
+}
+
+void
 tree_formatter::visit_fapply(syntree::fapply &fapply)
 {
   sstr << "fapply {";
@@ -124,9 +143,9 @@ tree_formatter::visit_postfix(syntree::postfix &postfix)
 }
 
 void
-tree_formatter::visit_token(syntree::token &token)
+tree_formatter::visit_ident(syntree::ident &ident)
 {
-  sstr << to_string(token.get_token());
+  sstr << to_string(ident.get_token());
 }
 
 void

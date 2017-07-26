@@ -16,10 +16,14 @@ public:
   void dedent(void);
   void newline(void);
 
+  void reset(void);
+
   std::string get_text(void) const;
 
+  virtual void visit_num(syntree::num &num);
+  virtual void visit_atom(syntree::atom &atom);
   virtual void visit_binop(syntree::binop &binop);
-  virtual void visit_token(syntree::token &token);
+  virtual void visit_ident(syntree::ident &ident);
   virtual void visit_fapply(syntree::fapply &fapply);
   virtual void visit_prefix(syntree::prefix &prefix);
   virtual void visit_postfix(syntree::postfix &postfix);

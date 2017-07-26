@@ -17,7 +17,7 @@ namespace syntree
     expressions(std::vector<std::shared_ptr<ast>> exprs = {});
     expressions(const syntree::expressions &ref);
     expressions(syntree::expressions &&ref);
-    ~expressions();
+    ~expressions() = default;
 
     syntree::expressions &operator=(syntree::expressions obj);
     std::shared_ptr<ast> &operator[](size_t idx);
@@ -27,6 +27,9 @@ namespace syntree
 
     virtual void accept(visitor &vis);
     virtual std::string type_name(void) const;
+    virtual std::unique_ptr<rt::mp_value> eval(env_t env);
+    virtual std::unique_ptr<rt::mp_value> clone(void) const;
+    virtual std::unique_ptr<rt::mp_value> send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param);
 
     friend void swap(syntree::expressions &a, syntree::expressions &b);
   };

@@ -18,10 +18,6 @@ namespace syntree
     swap(*this, ref);
   }
 
-  expressions::~expressions()
-  {
-  }
-
   syntree::expressions &
   expressions::operator=(syntree::expressions obj)
   {
@@ -57,6 +53,26 @@ namespace syntree
   expressions::type_name(void) const
   {
     return "expressions";
+  }
+  
+  std::unique_ptr<rt::mp_value>
+  expressions::eval(env_t env)
+  {
+    std::unique_ptr<rt::mp_value> res = nullptr;
+    for (size_t i = 0; i < exprs.size(); ++i) res = exprs[i]->eval(env);
+    return res;
+  }
+
+  std::unique_ptr<rt::mp_value>
+  expressions::clone(void) const
+  {
+    return std::unique_ptr<rt::mp_value>(new expressions(exprs));
+  }
+
+  std::unique_ptr<rt::mp_value>
+  expressions::send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param)
+  {
+    return eval(env)->send(env, msg, std::move(param));
   }
 
   void

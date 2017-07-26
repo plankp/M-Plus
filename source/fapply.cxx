@@ -49,6 +49,25 @@ namespace syntree
     return "fapply";
   }
 
+  std::unique_ptr<rt::mp_value>
+  fapply::clone(void) const
+  {
+    return std::unique_ptr<rt::mp_value>(new fapply(base, param));
+  }
+
+  std::unique_ptr<rt::mp_value>
+  fapply::eval(env_t env)
+  {
+    if (param) return base->send(env, "call", param->clone());
+    return base->send(env, "call", nullptr);
+  }
+
+  std::unique_ptr<rt::mp_value>
+  fapply::send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> _p)
+  {
+    return eval(env)->send(env, msg, std::move(_p));
+  }
+
   void
   swap(syntree::fapply &a, syntree::fapply &b)
   {

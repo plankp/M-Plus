@@ -28,6 +28,9 @@ namespace syntree
 
     virtual void accept(visitor &v);
     virtual std::string type_name(void) const;
+    virtual std::unique_ptr<rt::mp_value> eval(env_t env);
+    virtual std::unique_ptr<rt::mp_value> clone(void) const;
+    virtual std::unique_ptr<rt::mp_value> send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param);
 
     friend void swap(syntree::fapply &a, syntree::fapply &b);
   };

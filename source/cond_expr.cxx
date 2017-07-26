@@ -68,6 +68,34 @@ namespace syntree
     return "cond_expr";
   }
 
+  std::unique_ptr<rt::mp_value>
+  cond_expr::eval(env_t env)
+  {
+    for (size_t i = 0; i < if_clauses.size(); ++i)
+      {
+	auto res = if_clauses[i]->eval(env);
+	if (res) return res;
+      }
+    if (else_clause)
+      {
+	auto res = else_clause->eval(env);
+	if (res) return res;
+      }
+    return nullptr;
+  }
+
+  std::unique_ptr<rt::mp_value>
+  cond_expr::clone(void) const
+  {
+    return std::unique_ptr<rt::mp_value>(new cond_expr(if_clauses, else_clause));
+  }
+
+  std::unique_ptr<rt::mp_value>
+  cond_expr::send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param)
+  {
+    return eval(env)->send(env, msg, std::move(param));
+  }
+
   void
   swap(syntree::cond_expr &a, syntree::cond_expr &b)
   {

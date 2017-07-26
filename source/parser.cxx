@@ -150,7 +150,7 @@ parse_expression(parser_info &src)
       if (optional(src, { mp_token_t::Y_DECL, mp_token_t::Y_SET }, op))
 	{
 	  // Consider making a new syntree type for this
-	  return std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::token>(new syntree::token(ident)), { parse_expression(src) }));
+	  return std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::ident>(new syntree::ident(ident)), { parse_expression(src) }));
 	}
 
       // unget ident, its part of another expression
@@ -324,7 +324,7 @@ parse_fapply (parser_info &src)
   // | fcompose
 
   auto tree = parse_fcompose(src);
-  if (optional(src, { mp_token_t::P_LPAREN }))
+  while (optional(src, { mp_token_t::P_LPAREN }))
     {
       if (optional(src, { mp_token_t::P_RPAREN }))
 	{
@@ -420,7 +420,7 @@ parse_if_expr (parser_info &src)
 	  mp_token_t tok = one_of(src, { mp_token_t::K_ELSE, mp_token_t::K_IF });
 	  if (tok.type == mp_token_t::K_IF)
 	    {
-	      tree->push_if_node(std::shared_ptr<syntree::binop>(new syntree::binop(tok, { std::move(expr) }, { parse_expressions(src) })));
+	      tree->push_if_node(std::shared_ptr<syntree::binop>(new syntree::binop(tok, { parse_expressions(src) }, { std::move(expr) })));
 
 	      if (optional(src, { mp_token_t::Y_COMMA })) continue;
 	      break;
@@ -479,8 +479,18 @@ parse_primitive (parser_info &src)
     {
       if (optional(src, { mp_token_t::P_RPAREN }))
 	{
+	  /*
+	   * To the evaluator, an <ident> being sent the <<produce>>
+	   * operator construct a function (or macro). To the runtime,
+	   * if the parameter is an empty string, it is a function taking
+	   * no parameters.
+	   *
+	   * We create an <ident> with <tok.text> of <"">
+	   */
 	  mp_token_t op = one_of(src, impl_produce);
-	  return std::unique_ptr<syntree::binop>(new syntree::binop(op, nullptr, parse_expression(src)));
+	  std::shared_ptr<syntree::ident> fake_param(new syntree::ident({
+		.type = mp_token_t::L_IDENT, .line_num = op.line_num, .col_num = op.col_num, .text = "" }));
+	  return std::unique_ptr<syntree::binop>(new syntree::binop(op, fake_param, parse_expression(src)));
 	}
       // Assume it is a function
       mp_token_t p;
@@ -500,7 +510,7 @@ parse_primitive (parser_info &src)
 	      auto tree = parse_expression(src);
 	      for (size_t i = ps.size(); i > 0; --i)
 		{
-		  tree = std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::token>(new syntree::token(ps[i - 1])), { std::move(tree) }));
+		  tree = std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::ident>(new syntree::ident(ps[i - 1])), { std::move(tree) }));
 		}
 	      return tree;
 	    }
@@ -510,11 +520,11 @@ parse_primitive (parser_info &src)
 	      if (optional(src, impl_produce, op))
 		{
 		  // Has to be a function in form of (a) -> <<expr>>
-		  return std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::token>(new syntree::token(p)), { parse_expression(src) }));
+		  return std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::ident>(new syntree::ident(p)), { parse_expression(src) }));
 		}
 	      // Its an expression ( x )
 	      // => return x as syntree
-	      return std::unique_ptr<syntree::token>(new syntree::token(p));
+	      return std::unique_ptr<syntree::ident>(new syntree::ident(p));
 	    }
 	  // Unshift token: its an expression, not a function
 	  src.unget(p);
@@ -530,10 +540,13 @@ parse_primitive (parser_info &src)
       mp_token_t op;
       if (optional(src, impl_produce, op))
 	{
-	  return std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::token>(new syntree::token(tok)), { parse_expression(src) }));
+	  return std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::ident>(new syntree::ident(tok)), { parse_expression(src) }));
 	}
-      return std::unique_ptr<syntree::token>(new syntree::token(tok));
+      return std::unique_ptr<syntree::ident>(new syntree::ident(tok));
     }
-  return std::unique_ptr<syntree::token>(new syntree::token(one_of(src, {
-	  mp_token_t::L_NUMBER, mp_token_t::L_ATOM })));
+  if (optional(src, { mp_token_t::L_NUMBER }, tok))
+    {
+      return std::unique_ptr<syntree::num>(new syntree::num(tok));
+    }
+  return std::unique_ptr<syntree::atom>(new syntree::atom(one_of(src, { mp_token_t::L_ATOM })));
 }

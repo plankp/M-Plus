@@ -15,6 +15,7 @@ namespace syntree
     mp_token_t op;
     std::shared_ptr<ast> lhs;
     std::shared_ptr<ast> rhs;
+
   public:
     binop() = default;
     binop(mp_token_t op, std::shared_ptr<ast> lhs, std::shared_ptr<ast> rhs);
@@ -30,6 +31,9 @@ namespace syntree
 
     virtual void accept(visitor &v);
     virtual std::string type_name(void) const;
+    virtual std::unique_ptr<rt::mp_value> eval(env_t env);
+    virtual std::unique_ptr<rt::mp_value> clone(void) const;
+    virtual std::unique_ptr<rt::mp_value> send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param);
 
     friend void swap(syntree::binop &a, syntree::binop &b);
   };

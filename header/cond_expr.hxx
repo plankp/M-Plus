@@ -31,9 +31,12 @@ namespace syntree
     size_t count_ifs(void);
     std::shared_ptr<syntree::ast> get_ifs(size_t idx);
     std::shared_ptr<syntree::ast> get_else(void);
-    
+
     virtual void accept(visitor &v);
     virtual std::string type_name(void) const;
+    virtual std::unique_ptr<rt::mp_value> eval(env_t env);
+    virtual std::unique_ptr<rt::mp_value> clone(void) const;
+    virtual std::unique_ptr<rt::mp_value> send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param);
 
     friend void swap(syntree::cond_expr &a, syntree::cond_expr &b);
   };
