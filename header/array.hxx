@@ -4,6 +4,8 @@
 #include "visitor.hxx"
 #include "mp_error.hxx"
 
+#include "mp_int.hxx"
+
 #include <deque>
 #include <memory>
 #include <algorithm>
@@ -36,6 +38,7 @@ namespace syntree
     virtual std::unique_ptr<rt::mp_value> clone(void) const;
     virtual bool is_truthy(void) const;
     virtual std::unique_ptr<rt::mp_value> send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param);
+    virtual std::string to_str(void) const;
 
     friend void swap(syntree::array &a, syntree::array &b);
   };

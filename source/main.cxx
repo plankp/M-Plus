@@ -37,7 +37,7 @@ main (int argc, char **argv)
 
       // Evaluator example
       std::stringstream code;
-      code << "((b) -> () -> do a = { @a if b, @\"\" else }; a end)(1)()";
+      code << "((b) -> () -> do a = { @a if b, @\"\" else }; a end)(1)():1.2 + 3.4 + 5(2):[]";
       istream_wrapper wrap1(code);
       parser_info info1(wrap1);
       std::map<std::string, std::shared_ptr<rt::mp_value>> env =
@@ -50,7 +50,9 @@ main (int argc, char **argv)
       formatter.visit(*tree);
       std::cout << "\nEval demo:" << std::endl
        		<< formatter.get_text() << std::endl;
-      std::cout << tree->eval(env)->to_str() << std::endl;
+      auto res = tree->eval(env);
+      std::cout << res->to_str() << std::endl
+		<< "type: " << to_string(res->get_type_tag()) << std::endl;
     }
   catch (std::exception &err)
     {

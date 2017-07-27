@@ -10,7 +10,7 @@ class visitor;
 
 namespace syntree
 {
-  class ast : public rt::mp_value
+  class ast : public virtual rt::mp_value
   {
   public:
     virtual void accept(visitor &v) = 0;

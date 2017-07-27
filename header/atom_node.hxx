@@ -5,6 +5,8 @@
 #include "visitor.hxx"
 #include "mp_error.hxx"
 
+#include "mp_int.hxx"
+
 #include <stdexcept>
 
 namespace syntree

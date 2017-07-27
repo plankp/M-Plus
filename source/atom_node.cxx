@@ -3,7 +3,7 @@
 namespace syntree
 {
   atom::atom(mp_token_t t)
-    : tok(t)
+    : rt::mp_value(rt::type_tag::ATOM), tok(t)
   {
     if (t.type != mp_token_t::L_ATOM)
       {
@@ -12,7 +12,7 @@ namespace syntree
   }
 
   atom::atom(const syntree::atom &ref)
-    : tok(ref.tok)
+    : rt::mp_value(ref), tok(ref.tok)
   {
   }
 
@@ -68,9 +68,24 @@ namespace syntree
   std::unique_ptr<rt::mp_value>
   atom::send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param)
   {
-    // Support primitive messages
-    // (see token_node.cxx for more)
-    throw rt::dispatch_error(msg);
+    if (param)
+      {
+	auto rhs = param->eval(env);
+#define TO(type) reinterpret_cast<type*>(rhs.get())
+	if (msg == "call")
+	  {
+	    if (rhs->get_type_tag() == rt::type_tag::INT)
+	      {
+		return std::unique_ptr<rt::mp_value>(new rt::mpint(to_str()[TO(rt::mpint)->to_int()]));
+	      }
+	  }
+#undef TO
+      }
+    else
+      {
+	if (msg == "&") return clone();
+      }
+    throw rt::dispatch_error(*this, msg);
   }
 
   std::string
@@ -95,6 +110,7 @@ namespace syntree
   {
     using std::swap;
 
+    swap(static_cast<rt::mp_value&>(a), static_cast<rt::mp_value&>(b));
     swap(a.tok, b.tok);
   }
 };

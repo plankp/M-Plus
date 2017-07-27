@@ -3,12 +3,12 @@
 namespace syntree
 {
   array::array(std::deque<std::shared_ptr<rt::mp_value>> _d)
-    : data(_d)
+    : rt::mp_value(rt::type_tag::ARRAY), data(_d)
   {
   }
 
   array::array(const syntree::array &ref)
-    : data(ref.data)
+    : rt::mp_value(ref), data(ref.data)
   {
   }
 
@@ -70,7 +70,7 @@ namespace syntree
   std::unique_ptr<syntree::array>
   array::cov_clone(void) const
   {
-    return std::unique_ptr<syntree::array>(new syntree::array(data));
+    return std::unique_ptr<syntree::array>(new syntree::array(*this));
   }
 
   std::unique_ptr<rt::mp_value>
@@ -83,27 +83,58 @@ namespace syntree
   array::is_truthy(void) const
   {
     // An empty cons array is always false
-    return data.empty();
+    return !data.empty();
   }
 
   std::unique_ptr<rt::mp_value>
   array::send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param)
   {
-    if (msg == ":")
+    if (param)
       {
-	// 1:[] => [1]
-	auto ret = cov_clone();
-	ret->data.push_front({ std::move(param) });
-	return ret;
+	auto rhs = param->eval(env);
+#define TO(type) reinterpret_cast<type*>(rhs.get())
+	if (msg == ":")
+	  {
+	    // 1:[] => [1]
+	    auto ret = cov_clone();
+	    ret->data.push_front({ std::move(rhs) });
+	    return ret;
+	  }
+	if (msg == "call")
+	  {
+	    if (rhs->get_type_tag() == rt::type_tag::INT)
+	      {
+		return data[TO(rt::mpint)->to_int()]->clone();
+	      }
+	    throw rt::dispatch_error(*this, msg, "rhs must be INT, found " + to_string(rhs->get_type_tag()));
+	  }
+#undef TO
+      }
+    else
+      {
+	if (msg == "&") return clone();
       }
 
-    throw rt::dispatch_error(msg);
+    throw rt::dispatch_error(*this, msg);
+  }
+
+  std::string
+  array::to_str(void) const
+  {
+    std::stringstream sstr;
+    for (size_t i = 0; i < data.size(); ++i)
+      {
+	sstr << data[i]->to_str() << ':';
+      }
+    sstr << '[' << ']';
+    return sstr.str();
   }
 
   void swap(syntree::array &a, syntree::array &b)
   {
     using std::swap;
 
+    swap(static_cast<rt::mp_value&>(a), static_cast<rt::mp_value&>(b));
     swap(a.data, b.data);
   }
 };

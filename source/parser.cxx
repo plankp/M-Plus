@@ -149,7 +149,6 @@ parse_expression(parser_info &src)
       mp_token_t op;
       if (optional(src, { mp_token_t::Y_DECL, mp_token_t::Y_SET }, op))
 	{
-	  // Consider making a new syntree type for this
 	  return std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::ident>(new syntree::ident(ident)), { parse_expression(src) }));
 	}
 
@@ -233,7 +232,7 @@ parse_cons (parser_info &src)
   mp_token_t tok;
   if (optional(src, { mp_token_t::Y_COLON }, tok))
     {
-      return std::unique_ptr<syntree::binop>(new syntree::binop(tok, { std::move(tree) }, { parse_cons(src) }));
+      return std::unique_ptr<syntree::binop>(new syntree::binop(tok, { parse_cons(src) }, { std::move(tree) }));
     }
   return tree;
 }

@@ -5,12 +5,14 @@ namespace rt
   udef_func::udef_func(std::string _p,
 		       std::shared_ptr<rt::mp_value> _b,
 		       std::map<std::string, std::shared_ptr<rt::mp_value>> _l)
-    : locals(_l), param_name(_p), body(_b)
+    : rt::function(),
+    locals(_l), param_name(_p), body(_b)
   {
   }
 
   udef_func::udef_func(const rt::udef_func &ref)
-    : locals(ref.locals), param_name(ref.param_name), body(ref.body)
+    : rt::function(ref),
+    locals(ref.locals), param_name(ref.param_name), body(ref.body)
   {
   }
 
@@ -44,13 +46,13 @@ namespace rt
   udef_func::on_call(void)
   {
     if (param_name.empty()) return body->eval(locals);
-    throw rt::dispatch_error("call [missing parameter <" + param_name + ">]");
+    throw rt::dispatch_error(*this, "call", "missing parameter <" + param_name + ">");
   }
 
   std::unique_ptr<rt::mp_value>
   udef_func::on_call(std::unique_ptr<rt::mp_value> param)
   {
-    if (param_name.empty()) throw rt::dispatch_error("call [unexpected parameter on unit function]");
+    if (param_name.empty()) throw rt::dispatch_error(*this, "call", "unexpected parameter on unit function");
     locals[param_name] = { std::move(param) };
     return body->eval(locals);
   }
@@ -60,6 +62,7 @@ namespace rt
   {
     using std::swap;
 
+    swap(static_cast<rt::function&>(a), static_cast<rt::function&>(b));
     swap(a.locals, b.locals);
     swap(a.param_name, b.param_name);
     swap(a.body, b.body);

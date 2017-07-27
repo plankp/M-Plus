@@ -2,6 +2,22 @@
 
 namespace rt
 {
+  function::function()
+    : rt::mp_value(rt::type_tag::FUNC)
+  {
+  }
+
+  function::function(const rt::function &ref)
+    : rt::mp_value(ref)
+  {
+  }
+
+  function::function(rt::function &&mref)
+    : function()
+  {
+    swap(*this, mref);
+  }
+
   std::unique_ptr<rt::mp_value>
   function::eval(env_t env)
   {
@@ -21,12 +37,20 @@ namespace rt
 	if (p) return on_call(p->eval(env));
 	return on_call();
       }
-    throw rt::dispatch_error(msg);
+    throw rt::dispatch_error(*this, msg);
   }
 
   std::string
   function::to_str(void) const
   {
     return "<function>";
+  }
+
+  void
+  swap(rt::function &a, rt::function &b)
+  {
+    using std::swap;
+
+    swap(static_cast<rt::mp_value&>(a), static_cast<rt::mp_value&>(b));
   }
 };

@@ -4,12 +4,16 @@
 #include "mp_error.hxx"
 #include "mp_value.hxx"
 
+#include <algorithm>
+
 namespace rt
 {
   class function : public mp_value
   {
   public:
-    function() = default;
+    function();
+    function(const rt::function &ref);
+    function(rt::function &&mref);
     virtual ~function() = default;
 
     virtual std::unique_ptr<rt::mp_value> eval(env_t env) final;
@@ -19,6 +23,8 @@ namespace rt
     virtual std::unique_ptr<rt::mp_value> clone(void) const = 0;
     virtual std::unique_ptr<rt::mp_value> on_call(void) = 0;
     virtual std::unique_ptr<rt::mp_value> on_call(std::unique_ptr<rt::mp_value> param) = 0;
+
+    friend void swap(rt::function &a, rt::function &b);
   };
 };
 

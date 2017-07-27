@@ -2,8 +2,10 @@
 #define _MP_NUM_NODE_HXX__
 
 #include "token.hxx"
+#include "mp_int.hxx"
 #include "visitor.hxx"
 #include "mp_error.hxx"
+#include "mp_float.hxx"
 
 #include <stdexcept>
 
@@ -13,6 +15,8 @@ namespace syntree
   {
   private:
     mp_token_t tok;
+
+    std::unique_ptr<rt::mp_value> to_rtval(void) const;
 
   public:
     num() = default;
