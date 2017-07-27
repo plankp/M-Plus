@@ -28,4 +28,6 @@ namespace rt
   };
 };
 
+#include "ext_unary_func.hxx"
+
 #endif /* !_MP_FUNCTION_HXX__ */

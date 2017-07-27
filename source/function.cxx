@@ -1,5 +1,7 @@
 #include "function.hxx"
 
+#include <iostream>
+
 namespace rt
 {
   function::function()
@@ -30,13 +32,30 @@ namespace rt
     // The only thing that uses the env parameter
     // should be the parameter being passed
 
-    if (msg == "call")
+    if (p)
       {
-	// If p is null, choose the void on_call (takes no parameters)
-	// otherwise pass the parameter in
-	if (p) return on_call(p->eval(env));
-	return on_call();
+	auto rhs = p->eval(env);
+	if (msg == "call") return on_call(std::move(rhs));
+	if (msg == ".")
+	  {
+	    // (f . g) => x -> f(g(x))
+	    auto lhs_ptr = clone().release();
+	    auto rhs_ptr = rhs.release();
+	    return rt::ext::unary_func([lhs_ptr, rhs_ptr, &env](std::unique_ptr<rt::mp_value> x)
+				       {
+					 // C++11 does not support initializer in lambda capture, hence the raw_ptr->unique_ptr
+					 auto lhs = std::unique_ptr<rt::mp_value>(lhs_ptr);
+					 auto rhs = std::unique_ptr<rt::mp_value>(rhs_ptr);
+					 return lhs->send(env, "call", rhs->send(env, "call", std::move(x)));
+				       }).clone();
+	  }
       }
+    else
+      {
+	if (msg == "call") return on_call();
+	if (msg == "&") return clone();
+      }
+
     throw rt::dispatch_error(*this, msg);
   }
 

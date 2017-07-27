@@ -2,6 +2,8 @@
 #include "parser.hxx"
 #include "tree_formatter.hxx"
 
+#include "ext_unary_func.hxx"
+
 #include <sstream>
 #include <iostream>
 
@@ -16,7 +18,7 @@ main (int argc, char **argv)
 	<< "let = (bind, val, body) => ((bind -> body)(val));\n"
 	<< "f(10);\n"
 	<< "do\n"
-	<< "  10 + 2 * -3^2 : f(a, b, c) : &&a() : nil;\n"
+	<< "  10 + 2 * -3^2 : (f . g . h)(a, b, c) : &&a() : nil;\n"
 	<< "  @DONE\n"
 	<< "end;\n"
 	<< "a <- {\n"
@@ -37,13 +39,20 @@ main (int argc, char **argv)
 
       // Evaluator example
       std::stringstream code;
-      code << "((b) -> () -> do a = { @a if b, @\"\" else }; a end)(1)():1.2 + 3.4 + 5(2):[]";
+      code << "f = x -> x + 2; g = x -> 3 * x;\n"
+	   << "print((f . g)(2));\n"
+	   << "((b) -> () -> do a = { @a if b, @\"\" else }; a end)(1)():1.2 + 3.4 + 5(2):[]";
       istream_wrapper wrap1(code);
       parser_info info1(wrap1);
       std::map<std::string, std::shared_ptr<rt::mp_value>> env =
 	{
-	  // Start off with nothing declared
-	  // (here is where stuff like print and read goes)
+	  {
+	    "print", std::shared_ptr<rt::mp_value>(new rt::ext::unary_func([](std::unique_ptr<rt::mp_value> x)
+	{
+	  std::cout << x->to_str() << std::endl;
+	  return x;
+	}))
+	  }
 	};
       auto tree = parse(info1);
       formatter.reset();
@@ -51,8 +60,11 @@ main (int argc, char **argv)
       std::cout << "\nEval demo:" << std::endl
        		<< formatter.get_text() << std::endl;
       auto res = tree->eval(env);
-      std::cout << res->to_str() << std::endl
-		<< "type: " << to_string(res->get_type_tag()) << std::endl;
+      if (res)
+	{
+	  std::cout << res->to_str() << std::endl
+		    << "type: " << to_string(res->get_type_tag()) << std::endl;
+	}
     }
   catch (std::exception &err)
     {

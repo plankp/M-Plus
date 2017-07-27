@@ -344,14 +344,14 @@ parse_fapply (parser_info &src)
 std::unique_ptr<syntree::ast>
 parse_fcompose (parser_info &src)
 {
-  // = fcompose '.' qexpr
+  // = qexpr '.' fcompose
   // | qexpr
 
   std::unique_ptr<syntree::ast> tree = parse_qexpr(src);
   mp_token_t tok;
   if (optional(src, { mp_token_t::Y_PERIOD }, tok))
     {
-      return std::unique_ptr<syntree::binop>(new syntree::binop(tok, { std::move(tree) }, { parse_qexpr(src) }));
+      return std::unique_ptr<syntree::binop>(new syntree::binop(tok, { std::move(tree) }, { parse_fcompose(src) }));
     }
   return tree;
 }
