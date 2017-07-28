@@ -56,26 +56,16 @@ static
 mp_token_t
 create_eof_token (istream_wrapper &src)
 {
-  return (mp_token_t)
-    {
-      .type = mp_token_t::S_EOF,
-	.line_num = src.get_line_num(),
-	.col_num = src.get_col_num(),
-	.text = ""
-	};
+  return { mp_token_t::S_EOF, src.get_line_num(), src.get_col_num(),
+      "" };
 }
 
 static
 mp_token_t
 create_err_token (istream_wrapper &src, char ch)
 {
-  return (mp_token_t)
-    {
-      .type = mp_token_t::S_ERR,
-	.line_num = src.get_line_num(),
-	.col_num = src.get_col_num(),
-	.text = std::string(1, ch)
-	};
+  return { mp_token_t::S_ERR, src.get_line_num(), src.get_col_num(),
+      std::string(1, ch) };
 }
 
 mp_token_t
@@ -97,219 +87,99 @@ next_token (istream_wrapper &src)
 	  }
 	  break;
 	case '{':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::P_LCURL,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = "{"
-		};
+	  return { mp_token_t::P_LCURL,
+	      src.get_line_num(), src.get_col_num(), "{" };
 	case '}':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::P_RCURL,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = "}"
-		};
+	  return { mp_token_t::P_RCURL,
+	      src.get_line_num(), src.get_col_num(), "}" };
 	case '[':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::P_LSQUARE,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = "["
-		};
+	  return { mp_token_t::P_LSQUARE,
+	      src.get_line_num(), src.get_col_num(), "[" };
 	case ']':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::P_RSQUARE,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = "]"
-		};
+	  return { mp_token_t::P_RSQUARE,
+	      src.get_line_num(), src.get_col_num(), "]" };
 	case '(':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::P_LPAREN,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = "("
-		};
+	  return { mp_token_t::P_LPAREN,
+	      src.get_line_num(), src.get_col_num(), "(" };
 	case ')':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::P_RPAREN,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = ")"
-		};
+	  return { mp_token_t::P_RPAREN,
+	      src.get_line_num(), src.get_col_num(), ")" };
 	case '+':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::Y_ADD,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = "+"
-		};
+	  return { mp_token_t::Y_ADD,
+	      src.get_line_num(), src.get_col_num(), "+" };
 	case '-':
 	  {
 	    const int ch = src.get();
 	    if (ch == '>')
-	      return (mp_token_t)
-		{
-		  .type = mp_token_t::Y_YIELD,
-		    .line_num = src.get_line_num(),
-		    .col_num = src.get_col_num(),
-		    .text = "->"
-		    };
+	      return { mp_token_t::Y_YIELD,
+		  src.get_line_num(), src.get_col_num(), "->" };
 
 	    src.unget(ch);
-	    return (mp_token_t)
-	      {
-		.type = mp_token_t::Y_SUB,
-		  .line_num = src.get_line_num(),
-		  .col_num = src.get_col_num(),
-		  .text = "-"
-		  };
+	    return { mp_token_t::Y_SUB,
+		src.get_line_num(), src.get_col_num(), "-" };
 	  }
 	case '*':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::Y_MUL,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = "*"
-		};
+	  return { mp_token_t::Y_MUL,
+	      src.get_line_num(), src.get_col_num(), "*" };
 	case '/':
 	  {
 	    const int ch = src.get();
 	    if (ch == '=')
-	      return (mp_token_t)
-		{
-		  .type = mp_token_t::Y_NEQ,
-		    .line_num = src.get_line_num(),
-		    .col_num = src.get_col_num(),
-		    .text = "/="
-		    };
+	      return { mp_token_t::Y_NEQ,
+		  src.get_line_num(), src.get_col_num(), "/=" };
 
 	    src.unget(ch);
-	    return (mp_token_t)
-	      {
-		.type = mp_token_t::Y_DIV,
-		  .line_num = src.get_line_num(),
-		  .col_num = src.get_col_num(),
-		  .text = "/"
-		};
+	    return { mp_token_t::Y_DIV,
+		src.get_line_num(), src.get_col_num(), "/" };
 	  }
 	case '^':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::Y_POW,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = "^"
-		};
+	  return { mp_token_t::Y_POW,
+	      src.get_line_num(), src.get_col_num(), "^" };
 	case '%':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::Y_PERCENT,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = "%"
-		};
+	  return { mp_token_t::Y_PERCENT,
+	      src.get_line_num(), src.get_col_num(), "%" };
 	case '&':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::Y_QEXPR,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = "&"
-		};
+	  return { mp_token_t::Y_QEXPR,
+	      src.get_line_num(), src.get_col_num(), "&" };
 	case ':':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::Y_COLON,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = ":"
-		};
+	  return { mp_token_t::Y_COLON,
+	      src.get_line_num(), src.get_col_num(), ":" };
 	case ';':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::Y_SEMI,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = ";"
-		};
+	  return { mp_token_t::Y_SEMI,
+	      src.get_line_num(), src.get_col_num(), ";" };
 	case ',':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::Y_COMMA,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = ","
-		};
+	  return { mp_token_t::Y_COMMA,
+	      src.get_line_num(), src.get_col_num(), "," };
 	case '.':
-	  return (mp_token_t)
-	    {
-	      .type = mp_token_t::Y_PERIOD,
-		.line_num = src.get_line_num(),
-		.col_num = src.get_col_num(),
-		.text = "."
-		};
+	  return { mp_token_t::Y_PERIOD,
+	      src.get_line_num(), src.get_col_num(), "." };
 	case '=':
 	  {
 	    const int ch = src.get();
 	    switch (ch)
 	      {
 	      case '=':
-		return (mp_token_t)
-		  {
-		    .type = mp_token_t::Y_EQL,
-		      .line_num = src.get_line_num(),
-		      .col_num = src.get_col_num(),
-		      .text = "=="
-		      };
+		return { mp_token_t::Y_EQL,
+		    src.get_line_num(), src.get_col_num(), "==" };
 	      case '>':
-		return (mp_token_t)
-		  {
-		    .type = mp_token_t::Y_MACRO,
-		      .line_num = src.get_line_num(),
-		      .col_num = src.get_col_num(),
-		      .text = "=>"
-		      };
+		return { mp_token_t::Y_MACRO,
+		    src.get_line_num(), src.get_col_num(), "=>" };
 	      default:
 		src.unget(ch);
-		return (mp_token_t)
-		  {
-		    .type = mp_token_t::Y_DECL,
-		      .line_num = src.get_line_num(),
-		      .col_num = src.get_col_num(),
-		      .text = "="
-		      };
+		return { mp_token_t::Y_DECL,
+		    src.get_line_num(), src.get_col_num(), "=" };
 	      }
 	  }
 	case '>':
 	  {
 	    const int ch = src.get();
 	    if (ch == '=')
-	      return (mp_token_t)
-		{
-		  .type = mp_token_t::Y_GE,
-		    .line_num = src.get_line_num(),
-		    .col_num = src.get_col_num(),
-		    .text = ">="
-		    };
+	      return { mp_token_t::Y_GE,
+		  src.get_line_num(), src.get_col_num(), ">=" };
 
 	    src.unget(ch);
-	    return (mp_token_t)
-	      {
-		.type = mp_token_t::Y_GT,
-		  .line_num = src.get_line_num(),
-		  .col_num = src.get_col_num(),
-		  .text = ">"
-		  };
+	    return { mp_token_t::Y_GT, src.get_line_num(), src.get_col_num(),
+		">" };
 	  }
 	case '<':
 	  {
@@ -317,30 +187,15 @@ next_token (istream_wrapper &src)
 	    switch (ch)
 	      {
 	      case '-':
-		return (mp_token_t)
-		  {
-		    .type = mp_token_t::Y_SET,
-		      .line_num = src.get_line_num(),
-		      .col_num = src.get_col_num(),
-		      .text = "<-"
-		      };
+		return { mp_token_t::Y_SET,
+		    src.get_line_num(), src.get_col_num(), "<-" };
 	      case '=':
-		return (mp_token_t)
-		  {
-		    .type = mp_token_t::Y_LE,
-		      .line_num = src.get_line_num(),
-		      .col_num = src.get_col_num(),
-		      .text = "<="
-		      };
+		return { mp_token_t::Y_LE,
+		    src.get_line_num(), src.get_col_num(), "<=" };
 	      default:
 		src.unget(ch);
-		return (mp_token_t)
-		  {
-		    .type = mp_token_t::Y_LT,
-		      .line_num = src.get_line_num(),
-		      .col_num = src.get_col_num(),
-		      .text = "<"
-		      };
+		return { mp_token_t::Y_LT,
+		    src.get_line_num(), src.get_col_num(), "<" };
 	      }
 	  }
 	case EOF:
@@ -405,13 +260,8 @@ next_symbol (istream_wrapper &src)
       next_opt_ident(src, stream);
       std::string s = stream.str();
       auto it = KWORDS.find(s);
-      return (mp_token_t)
-	{
-	  .type = it == KWORDS.end() ? mp_token_t::L_IDENT : it->second,
-	    .line_num = src.get_line_num(),
-	    .col_num = src.get_col_num(),
-	    .text = s
-	    };
+      return { it == KWORDS.end() ? mp_token_t::L_IDENT : it->second,
+	  src.get_line_num(), src.get_col_num(), s };
     }
   return create_err_token(src, ch);
 }
@@ -484,26 +334,16 @@ next_number (istream_wrapper &src)
       std::stringstream sstr;
       sstr << static_cast<char>(ch);
       next_zero_number(src, sstr);
-      return (mp_token_t)
-	{
-	  .type = mp_token_t::L_NUMBER,
-	    .line_num = src.get_line_num(),
-	    .col_num = src.get_col_num(),
-	    .text = sstr.str()
-	    };
+      return { mp_token_t::L_NUMBER, src.get_line_num(), src.get_col_num(),
+	  sstr.str() };
     }
   if (is_decimal(ch))
     {
       std::stringstream sstr;
       sstr << static_cast<char>(ch);
       next_raw_decimal(src, sstr);
-      return (mp_token_t)
-	{
-	  .type = mp_token_t::L_NUMBER,
-	    .line_num = src.get_line_num(),
-	    .col_num = src.get_col_num(),
-	    .text = sstr.str()
-	    };
+      return { mp_token_t::L_NUMBER, src.get_line_num(), src.get_col_num(),
+	  sstr.str() };
     }
   return create_err_token(src, ch);
 }
@@ -536,13 +376,8 @@ next_atom (istream_wrapper &src)
 	  src.unget(ch);
 	  next_opt_ident(src, sstr);
 	}
-      return (mp_token_t)
-	{
-	  .type = mp_token_t::L_ATOM,
-	    .line_num = src.get_line_num(),
-	    .col_num = src.get_col_num(),
-	    .text = sstr.str()
-	    };
+      return { mp_token_t::L_ATOM, src.get_line_num(), src.get_col_num(),
+	  sstr.str() };
     }
   return create_err_token(src, ch);
 }
