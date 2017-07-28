@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 2.8.12)
+cmake_policy(SET CMP0054 NEW)
+project(MPLUS)
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -O3")
+    set(CMAKE_EXE_LINKER_FLAGS "-Os -s -fdata-sections -ffunction-sections -Wl,--gc-sections,--strip-all")
+elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    set(CMAKE_CXX_FLAGS, "-std=c++11 -Wall -O2 -Wc++11-extensions")
+    set(CMAKE_EXE_LINKER_FLAGS "-Os")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS "/O2 /W4 /GR /EHsc")
+    set(CMAKE_EXE_LINKER_FLAGS "/OPT:REF")
+endif()
+
+include_directories(${MPLUS_SOURCE_DIR}/header)
+add_subdirectory(source)
+
+add_executable(mplus main.cxx)
+target_link_libraries(mplus mplus_lib)

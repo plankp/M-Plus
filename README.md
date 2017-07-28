@@ -6,13 +6,16 @@ A programming language that took a lot from [NtShell](https://github.com/plankp/
 
 ## To build M+
 
-(Tested on Msys2 and should work on linux)
-
 You need:
-*  GNU Make
-*  GNU G++ (C++11 supporting)
+*  CMake >= 2.8.12
+*  C++11 supporting compiler
 
-run `make` and you get `mplus`
+```
+% mkdir build
+% cd build
+% cmake ..
+% make
+```
 
 ## To run M+ interpreter
 
