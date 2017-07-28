@@ -1,4 +1,4 @@
-# M+
+# MPlus [![Build status](https://ci.appveyor.com/api/projects/status/825xhlrdh0eahyrf/branch/master?svg=true)](https://ci.appveyor.com/project/plankp/m-plus/branch/master)
 
 A programming language that took a lot from [NtShell](https://github.com/plankp/NtShell)
 
