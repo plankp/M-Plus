@@ -79,6 +79,24 @@ namespace syntree
 		return std::unique_ptr<rt::mp_value>(new rt::mpint(to_str()[TO(rt::mpint)->to_int()]));
 	      }
 	  }
+
+	if (msg == "==")
+	  {
+	    if (rhs->get_type_tag() == rt::type_tag::ATOM)
+	      {
+		return std::unique_ptr<rt::mp_value>(new rt::mpint(to_str() == TO(syntree::atom)->to_str()));
+	      }
+	    return std::unique_ptr<rt::mp_value>(new rt::mpint(false));
+	  }
+
+	if (msg == "/=")
+	  {
+	    if (rhs->get_type_tag() == rt::type_tag::ATOM)
+	      {
+		return std::unique_ptr<rt::mp_value>(new rt::mpint(to_str() != TO(syntree::atom)->to_str()));
+	      }
+	    return std::unique_ptr<rt::mp_value>(new rt::mpint(true));
+	  }
 #undef TO
       }
     else

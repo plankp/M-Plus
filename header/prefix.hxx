@@ -4,6 +4,8 @@
 #include "token.hxx"
 #include "visitor.hxx"
 
+#include "quote_expr.hxx"
+
 #include <memory>
 #include <algorithm>
 
@@ -32,6 +34,7 @@ namespace syntree
     virtual std::unique_ptr<rt::mp_value> eval(env_t env);
     virtual std::unique_ptr<rt::mp_value> clone(void) const;
     virtual std::unique_ptr<rt::mp_value> send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param);
+    virtual std::string to_str(void) const;
 
     friend void swap(syntree::prefix &a, syntree::prefix &b);
   };

@@ -121,6 +121,45 @@ namespace rt
 		throw dispatch_error(*this, msg, "rhs must be INT or FLOAT, found " + to_string(rhs->get_type_tag()));
 	      }
 	  }
+
+	if (msg == "^")
+	  {
+	    switch (rhs->get_type_tag())
+	      {
+	      case rt::type_tag::INT:
+		return std::unique_ptr<rt::mp_value>(new rt::mpfloat(std::pow(val, TO(rt::mpint)->to_int())));
+	      case rt::type_tag::FLOAT:
+		return std::unique_ptr<rt::mp_value>(new rt::mpfloat(std::pow(val, TO(rt::mpfloat)->val)));
+	      default:
+		throw dispatch_error(*this, msg, "rhs must be INT or FLOAT, found " + to_string(rhs->get_type_tag()));
+	      }
+	  }
+
+	if (msg == "==")
+	  {
+	    switch (rhs->get_type_tag())
+	      {
+	      case rt::type_tag::INT:
+		return std::unique_ptr<rt::mp_value>(new rt::mpint(val == TO(rt::mpint)->to_int()));
+	      case rt::type_tag::FLOAT:
+		return std::unique_ptr<rt::mp_value>(new rt::mpfloat(val == TO(rt::mpfloat)->val));
+	      default:
+		return std::unique_ptr<rt::mp_value>(new rt::mpint(false));
+	      }
+	  }
+
+	if (msg == "/=")
+	  {
+	    switch (rhs->get_type_tag())
+	      {
+	      case rt::type_tag::INT:
+		return std::unique_ptr<rt::mp_value>(new rt::mpint(val != TO(rt::mpint)->to_int()));
+	      case rt::type_tag::FLOAT:
+		return std::unique_ptr<rt::mp_value>(new rt::mpfloat(val != TO(rt::mpfloat)->val));
+	      default:
+		return std::unique_ptr<rt::mp_value>(new rt::mpint(true));
+	      }
+	  }
 #undef TO
       }
     else

@@ -52,6 +52,7 @@ namespace syntree
   std::unique_ptr<rt::mp_value>
   prefix::eval(env_t env)
   {
+    if (op.text == "&") return rt::make_quote({ base->clone() });
     return base->eval(env)->send(env, op.text, nullptr);
   }
 
@@ -64,7 +65,14 @@ namespace syntree
   std::unique_ptr<rt::mp_value>
   prefix::send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param)
   {
+    if (!param && msg == "&") return rt::make_quote({ clone() });
     return eval(env)->send(env, msg, std::move(param));
+  }
+
+  std::string
+  prefix::to_str(void) const
+  {
+    return op.text + base->to_str();
   }
 
   void

@@ -15,8 +15,9 @@ namespace syntree
   class array : public ast
   {
   private:
+    bool needs_eval;
     std::deque<std::shared_ptr<rt::mp_value>> data;
-    
+
     std::unique_ptr<syntree::array> cov_clone(void) const;
 
   public:

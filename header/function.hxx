@@ -4,6 +4,8 @@
 #include "mp_error.hxx"
 #include "mp_value.hxx"
 
+#include "quote_expr.hxx"
+
 #include <algorithm>
 
 namespace rt

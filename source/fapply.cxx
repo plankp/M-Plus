@@ -65,6 +65,7 @@ namespace syntree
   std::unique_ptr<rt::mp_value>
   fapply::send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> _p)
   {
+    if (!_p && msg == "&") return rt::make_quote({ clone() });
     return eval(env)->send(env, msg, std::move(_p));
   }
 

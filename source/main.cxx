@@ -4,66 +4,40 @@
 
 #include "ext_unary_func.hxx"
 
-#include <sstream>
+#include <fstream>
 #include <iostream>
 
 int
 main (int argc, char **argv)
 {
+  if (argc != 2)
+    {
+      std::cerr << "Run like this: mplus [MPlus script]" << std::endl;
+      return 1;
+    }
+
   try
     {
-      // Parser example
-      std::stringstream s;
-      s << "f = x -> x + 2 * -3^2;\n"
-	<< "let = (bind, val, body) => ((bind -> body)(val));\n"
-	<< "f(10);\n"
-	<< "do\n"
-	<< "  10 + 2 * -3^2 : (f . g . h)(a, b, c) : &&a() : nil;\n"
-	<< "  @DONE\n"
-	<< "end;\n"
-	<< "a <- {\n"
-	<< " 10   if a,\n"
-	<< " 11   if b,\n"
-	<< " 12   if a == b or b == c or a == c,\n"
-	<< " 13   else\n"
-	<< "};\n"
-	<< "(a) -> (a);\n"
-	<< "(a, b) -> a + b;\n"
-	<< "(a, b, c) -> a + b + c;\n"
-	<< "(() -> do []; [1, 2, 3]; a:[b] end)()";
+      std::ifstream s(argv[1], std::ios::in);
       istream_wrapper wrap(s);
       parser_info info(wrap);
-      tree_formatter formatter;
-      formatter.visit(*parse(info));
-      std::cout << formatter.get_text() << std::endl;
 
-      // Evaluator example
-      std::stringstream code;
-      code << "f = x -> x + 2; g = x -> 3 * x;\n"
-	   << "print((f . g)(2));\n"
-	   << "((b) -> () -> do a = { @a if b, @\"\" else }; a end)(1)():1.2 + 3.4 + 5(2):[]";
-      istream_wrapper wrap1(code);
-      parser_info info1(wrap1);
-      std::map<std::string, std::shared_ptr<rt::mp_value>> env =
-	{
-	  {
-	    "print", std::shared_ptr<rt::mp_value>(new rt::ext::unary_func([](std::unique_ptr<rt::mp_value> x)
-	{
-	  std::cout << x->to_str() << std::endl;
-	  return x;
-	}))
-	  }
-	};
-      auto tree = parse(info1);
-      formatter.reset();
+      std::map<std::string, std::shared_ptr<rt::mp_value>> env
+      {
+	{ "print", std::shared_ptr<rt::mp_value>(new rt::ext::unary_func([](std::unique_ptr<rt::mp_value> x) {
+		std::cout << x->to_str() << std::endl;
+		return x; })) }
+      };
+
+      auto tree = parse(info);
+      tree_formatter formatter;
       formatter.visit(*tree);
       std::cout << "\nEval demo:" << std::endl
        		<< formatter.get_text() << std::endl;
       auto res = tree->eval(env);
       if (res)
 	{
-	  std::cout << res->to_str() << std::endl
-		    << "type: " << to_string(res->get_type_tag()) << std::endl;
+	  std::cout << res->to_str() << std::endl;
 	}
     }
   catch (std::exception &err)

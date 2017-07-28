@@ -4,7 +4,9 @@
 #include "token.hxx"
 #include "visitor.hxx"
 #include "mp_error.hxx"
+
 #include "udef_func.hxx"
+#include "quote_expr.hxx"
 
 #include <algorithm>
 

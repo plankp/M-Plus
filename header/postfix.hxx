@@ -4,6 +4,8 @@
 #include "token.hxx"
 #include "visitor.hxx"
 
+#include "quote_expr.hxx"
+
 #include <memory>
 #include <algorithm>
 

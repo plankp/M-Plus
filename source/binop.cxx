@@ -58,6 +58,20 @@ namespace syntree
 	return nullptr;
       }
 
+    if (op.text == "or") // short circuit strategy
+      {
+	auto t = lhs->eval(env);
+	if (t->is_truthy()) return t;
+	return rhs->eval(env);
+      }
+
+    if (op.text == "and") // short circuit strategy
+      {
+	auto t = lhs->eval(env);
+	if (t->is_truthy()) return rhs->eval(env);
+	return t;
+      }
+
     // Have lhs handle other messages
     return lhs->send(env, op.text, rhs->clone());
   }
@@ -71,6 +85,7 @@ namespace syntree
   std::unique_ptr<rt::mp_value>
   binop::send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param)
   {
+    if (!param && msg == "&") return rt::make_quote({ clone() });
     return eval(env)->send(env, msg, std::move(param));
   }
 

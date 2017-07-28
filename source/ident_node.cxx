@@ -70,27 +70,34 @@ namespace syntree
     //   - =
     //   - ->
 
-    if (msg == "<-")
+    if (param)
       {
-	auto rhs = param->eval(env);
-	try
-	  { env.at(tok.text) = { rhs->clone() }; }
-	catch (std::out_of_range &e)
-	  { throw rt::illegal_handle_error(tok.text); }
-	return rhs;
-      }
+	if (msg == "<-")
+	  {
+	    auto rhs = param->eval(env);
+	    try
+	      { env.at(tok.text) = { rhs->clone() }; }
+	    catch (std::out_of_range &e)
+	      { throw rt::illegal_handle_error(tok.text); }
+	    return rhs;
+	  }
 
-    if (msg == "=")
-      {
-	auto rhs = param->eval(env);
-	env[tok.text] = { rhs->clone() };
-	return rhs;
-      }
+	if (msg == "=")
+	  {
+	    auto rhs = param->eval(env);
+	    env[tok.text] = { rhs->clone() };
+	    return rhs;
+	  }
 
-    if (msg == "->")
+	if (msg == "->")
+	  {
+	    // Do not process parameter
+	    return std::unique_ptr<rt::udef_func>(new rt::udef_func(tok.text, std::move(param), env));
+	  }
+      }
+    else
       {
-	// Do not process parameter
-	return std::unique_ptr<rt::udef_func>(new rt::udef_func(tok.text, std::move(param), env));
+	if (msg == "&") return rt::make_quote({ clone() });
       }
 
     // Runtime wanted to send to the value referenced by the identifier

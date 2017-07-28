@@ -53,7 +53,7 @@ namespace rt
     else
       {
 	if (msg == "call") return on_call();
-	if (msg == "&") return clone();
+	if (msg == "&") return make_quote({ clone() });
       }
 
     throw rt::dispatch_error(*this, msg);

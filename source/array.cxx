@@ -3,12 +3,12 @@
 namespace syntree
 {
   array::array(std::deque<std::shared_ptr<rt::mp_value>> _d)
-    : rt::mp_value(rt::type_tag::ARRAY), data(_d)
+    : rt::mp_value(rt::type_tag::ARRAY), needs_eval(true), data(_d)
   {
   }
 
   array::array(const syntree::array &ref)
-    : rt::mp_value(ref), data(ref.data)
+    : rt::mp_value(ref), needs_eval(ref.needs_eval), data(ref.data)
   {
   }
 
@@ -64,6 +64,14 @@ namespace syntree
   std::unique_ptr<rt::mp_value>
   array::eval(env_t env)
   {
+    if (needs_eval)
+      {
+	for (size_t i = 0; i < data.size(); ++i)
+	  {
+	    data[i] = data[i]->eval(env);
+	  }
+	needs_eval = false;
+      }
     return clone();
   }
 
@@ -89,6 +97,8 @@ namespace syntree
   std::unique_ptr<rt::mp_value>
   array::send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param)
   {
+    if (needs_eval) return eval(env)->send(env, msg, std::move(param));
+
     if (param)
       {
 	auto rhs = param->eval(env);
@@ -100,6 +110,7 @@ namespace syntree
 	    ret->data.push_front({ std::move(rhs) });
 	    return ret;
 	  }
+
 	if (msg == "call")
 	  {
 	    if (rhs->get_type_tag() == rt::type_tag::INT)
@@ -107,6 +118,26 @@ namespace syntree
 		return data[TO(rt::mpint)->to_int()]->clone();
 	      }
 	    throw rt::dispatch_error(*this, msg, "rhs must be INT, found " + to_string(rhs->get_type_tag()));
+	  }
+
+	if (msg == "==" || msg == "/=") // short circuit strategy
+	  {
+	    if (rhs->get_type_tag() == rt::type_tag::ARRAY)
+	      {
+		// [0,1,2] == [1] is false seeing its different length
+		auto arr = TO(syntree::array);
+		if (data.size() == arr->data.size())
+		  {
+		    // compare each element
+		    // [0,1] == [1,2] is false after seeing the first element
+		    for (size_t i = 0; i < data.size(); ++i)
+		      {
+			auto t = data[i]->send(env, msg, arr->data[i]->clone());
+			if (!t->is_truthy()) return t;
+		      }
+		  }
+	      }
+	    return std::unique_ptr<rt::mp_value>(new rt::mpint(msg == "/="));
 	  }
 #undef TO
       }
@@ -135,6 +166,7 @@ namespace syntree
     using std::swap;
 
     swap(static_cast<rt::mp_value&>(a), static_cast<rt::mp_value&>(b));
+    swap(a.needs_eval, b.needs_eval);
     swap(a.data, b.data);
   }
 };
