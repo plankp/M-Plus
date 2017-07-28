@@ -486,8 +486,9 @@ parse_primitive (parser_info &src)
 	   * We create an <ident> with <tok.text> of <"">
 	   */
 	  mp_token_t op = one_of(src, impl_produce);
-	  std::shared_ptr<syntree::ident> fake_param(new syntree::ident({
-		mp_token_t::L_IDENT, op.line_num, op.col_num, "" }));
+	  mp_token_t imp{ mp_token_t::L_IDENT,
+	      op.line_num, op.col_num, "" };
+	  std::shared_ptr<syntree::ident> fake_param(new syntree::ident(imp));
 	  return std::unique_ptr<syntree::binop>(new syntree::binop(op, fake_param, parse_expression(src)));
 	}
       // Assume it is a function
