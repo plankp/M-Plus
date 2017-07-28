@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <algorithm>
+#include <functional>
 
 namespace rt
 {
