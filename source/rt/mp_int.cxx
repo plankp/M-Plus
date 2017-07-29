@@ -26,7 +26,7 @@ namespace rt
   }
 
   std::unique_ptr<rt::mp_value>
-  mpint::eval(env_t env)
+  mpint::eval(env_t)
   {
     return clone();
   }

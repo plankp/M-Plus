@@ -32,7 +32,7 @@ namespace rt
   }
 
   std::unique_ptr<rt::mp_value>
-  mpfloat::eval(env_t env)
+  mpfloat::eval(env_t)
   {
     return clone();
   }
