@@ -12,7 +12,7 @@ main (int argc, char **argv)
 {
   if (argc != 2)
     {
-      std::cerr << "Run like this: mplus [MPlus script]" << std::endl;
+      std::cerr << "MPlus  BSD 3 Clause license\nRun like this: mplus [MPlus script]" << std::endl;
       return 1;
     }
 
