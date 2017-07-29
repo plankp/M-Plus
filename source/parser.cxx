@@ -127,11 +127,13 @@ parse_expressions (parser_info &src)
   // | expression ';' expressions
 
   auto tree = std::unique_ptr<syntree::expressions>(new syntree::expressions);
-  while (true)
+  //  while (true)
+  do
     {
       tree->push_back({ parse_expression(src) });
-      if (!optional(src, { mp_token_t::Y_SEMI })) break;
+      //      if (!optional(src, { mp_token_t::Y_SEMI })) break;
     }
+  while (optional(src, { mp_token_t::Y_SEMI }));
   return tree;
 }
 
@@ -142,11 +144,13 @@ parse_argument_list (parser_info &src)
   // | expression ',' argument_list
 
   auto tree = std::unique_ptr<syntree::expressions>(new syntree::expressions);
-  while (true)
+  //  while (true)
+  do
     {
       tree->push_back({ parse_expression(src) });
-      if (!optional(src, { mp_token_t::Y_COMMA })) break;
+      //  if (!optional(src, { mp_token_t::Y_COMMA })) break;
     }
+  while (optional(src, { mp_token_t::Y_COMMA }));
   return tree;
 }
 
@@ -427,7 +431,7 @@ parse_if_expr (parser_info &src)
 
       auto tree = std::unique_ptr<syntree::cond_expr>(new syntree::cond_expr);
 
-      while (true)
+      for (;;)
 	{
 	  auto expr = parse_expressions(src);
 	  mp_token_t tok = one_of(src, { mp_token_t::K_ELSE, mp_token_t::K_IF });

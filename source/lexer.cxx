@@ -85,7 +85,7 @@ create_err_token (istream_wrapper &src, char ch)
 mp_token_t
 next_token (istream_wrapper &src)
 {
-  while (true)
+  for (;;)
     {
       const int c = src.get();
       switch (c)
@@ -239,12 +239,13 @@ void
 next_opt_ident (istream_wrapper &src, std::stringstream &buf)
 {
   int ch;
-  while (true)
+  for (;;)
     {
       ch = src.get();
       if (is_ident(ch)) buf << static_cast<char>(ch);
       else break;
     }
+
   // ch now must be either ?, !, or something for another cycle to process
   if (ch == '?' || ch == '!') buf << static_cast<char>(ch);
   else src.unget(ch);
