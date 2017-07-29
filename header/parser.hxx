@@ -27,11 +27,14 @@ private:
   std::vector<mp_token_t> buf;
 
 public:
+  parser_info() = delete;
   parser_info(istream_wrapper &stream);
+  parser_info(const parser_info &ref) = delete;
+  parser_info(parser_info &&mref);
   ~parser_info() = default;
 
-  parser_info(const parser_info &ref) = delete;
-  parser_info(parser_info &&mref) = delete;
+  parser_info &operator=(const parser_info &ref) = delete;
+  parser_info &operator=(parser_info &&mref);
 
   mp_token_t peek(void);
   mp_token_t get(void);

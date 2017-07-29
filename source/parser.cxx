@@ -5,6 +5,20 @@ parser_info::parser_info(istream_wrapper &_stream)
 {
 }
 
+parser_info::parser_info(parser_info &&mref)
+  : stream(mref.stream), buf(mref.buf)
+{
+}
+
+parser_info &
+parser_info::operator=(parser_info &&mref)
+{
+  using std::swap;
+
+  swap(*this, mref);
+  return *this;
+}
+
 mp_token_t
 parser_info::peek(void)
 {
@@ -113,11 +127,13 @@ parse_expressions (parser_info &src)
   // | expression ';' expressions
 
   auto tree = std::unique_ptr<syntree::expressions>(new syntree::expressions);
-  while (true)
+  //  while (true)
+  do
     {
       tree->push_back({ parse_expression(src) });
-      if (!optional(src, { mp_token_t::Y_SEMI })) break;
+      //      if (!optional(src, { mp_token_t::Y_SEMI })) break;
     }
+  while (optional(src, { mp_token_t::Y_SEMI }));
   return tree;
 }
 
@@ -128,11 +144,13 @@ parse_argument_list (parser_info &src)
   // | expression ',' argument_list
 
   auto tree = std::unique_ptr<syntree::expressions>(new syntree::expressions);
-  while (true)
+  //  while (true)
+  do
     {
       tree->push_back({ parse_expression(src) });
-      if (!optional(src, { mp_token_t::Y_COMMA })) break;
+      //  if (!optional(src, { mp_token_t::Y_COMMA })) break;
     }
+  while (optional(src, { mp_token_t::Y_COMMA }));
   return tree;
 }
 
@@ -386,7 +404,7 @@ parse_do_end (parser_info &src)
 	}
       auto exprs = parse_expressions(src);
       one_of(src, { mp_token_t::K_END });
-      return exprs;
+      return static_cast<std::unique_ptr<syntree::ast>>(std::move(exprs));
     }
   return parse_if_expr(src);
 }
@@ -413,7 +431,7 @@ parse_if_expr (parser_info &src)
 
       auto tree = std::unique_ptr<syntree::cond_expr>(new syntree::cond_expr);
 
-      while (true)
+      for (;;)
 	{
 	  auto expr = parse_expressions(src);
 	  mp_token_t tok = one_of(src, { mp_token_t::K_ELSE, mp_token_t::K_IF });
@@ -430,7 +448,7 @@ parse_if_expr (parser_info &src)
 	  break;
 	}
       one_of(src, { mp_token_t::P_RCURL });
-      return tree;
+      return static_cast<std::unique_ptr<syntree::ast>>(std::move(tree));
     }
   return parse_primitive(src);
 }
@@ -471,7 +489,7 @@ parse_primitive (parser_info &src)
 	{
 	  tree->push_front((*datum)[i - 1]);
 	}
-      return tree;
+      return static_cast<std::unique_ptr<syntree::ast>>(std::move(tree));
     }
   if (optional(src, { mp_token_t::P_LPAREN }))
     {
@@ -486,8 +504,9 @@ parse_primitive (parser_info &src)
 	   * We create an <ident> with <tok.text> of <"">
 	   */
 	  mp_token_t op = one_of(src, impl_produce);
-	  std::shared_ptr<syntree::ident> fake_param(new syntree::ident({
-		.type = mp_token_t::L_IDENT, .line_num = op.line_num, .col_num = op.col_num, .text = "" }));
+	  mp_token_t imp{ mp_token_t::L_IDENT,
+	      op.line_num, op.col_num, "" };
+	  std::shared_ptr<syntree::ident> fake_param(new syntree::ident(imp));
 	  return std::unique_ptr<syntree::binop>(new syntree::binop(op, fake_param, parse_expression(src)));
 	}
       // Assume it is a function

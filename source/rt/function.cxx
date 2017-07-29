@@ -21,7 +21,7 @@ namespace rt
   }
 
   std::unique_ptr<rt::mp_value>
-  function::eval(env_t env)
+  function::eval(env_t)
   {
     return clone();
   }

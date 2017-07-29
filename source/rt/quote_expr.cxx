@@ -26,7 +26,7 @@ namespace rt
   }
 
   std::unique_ptr<rt::mp_value>
-  quote_expr::eval(env_t env)
+  quote_expr::eval(env_t)
   {
     return clone();
   }
@@ -38,7 +38,7 @@ namespace rt
   }
 
   std::unique_ptr<rt::mp_value>
-  quote_expr::send(env_t env, const std::string &msg, std::unique_ptr<rt::mp_value> param)
+  quote_expr::send(env_t, const std::string &msg, std::unique_ptr<rt::mp_value> param)
   {
     if (param)
       {

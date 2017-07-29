@@ -52,7 +52,7 @@ namespace syntree
   {
     try
       { return env.at(tok.text)->clone(); }
-    catch (std::out_of_range &e)
+    catch (std::out_of_range &)
       { throw rt::illegal_handle_error(tok.text); }
   }
 
@@ -77,7 +77,7 @@ namespace syntree
 	    auto rhs = param->eval(env);
 	    try
 	      { env.at(tok.text) = { rhs->clone() }; }
-	    catch (std::out_of_range &e)
+	    catch (std::out_of_range &)
 	      { throw rt::illegal_handle_error(tok.text); }
 	    return rhs;
 	  }

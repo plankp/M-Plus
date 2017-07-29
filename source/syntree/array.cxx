@@ -108,7 +108,7 @@ namespace syntree
 	    // 1:[] => [1]
 	    auto ret = cov_clone();
 	    ret->data.push_front({ std::move(rhs) });
-	    return ret;
+	    return static_cast<std::unique_ptr<rt::mp_value>>(std::move(ret));
 	  }
 
 	if (msg == "call")

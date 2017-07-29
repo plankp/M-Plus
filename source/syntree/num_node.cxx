@@ -70,7 +70,7 @@ namespace syntree
   }
 
   std::unique_ptr<rt::mp_value>
-  num::eval(env_t env)
+  num::eval(env_t)
   {
     return to_rtval();
   }

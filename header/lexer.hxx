@@ -7,6 +7,7 @@
 #include <string>
 #include <istream>
 #include <sstream>
+#include <algorithm>
 
 class istream_wrapper
 {
@@ -15,11 +16,14 @@ class istream_wrapper
   size_t col_num;
 
 public:
+  istream_wrapper() = delete;
   istream_wrapper(std::istream &stream);
+  istream_wrapper(const istream_wrapper &ref) = delete;
+  istream_wrapper(istream_wrapper &&mref);
   ~istream_wrapper() = default;
 
-  istream_wrapper(const istream_wrapper &ref) = delete;
-  istream_wrapper(istream_wrapper &&ref) = delete;
+  istream_wrapper &operator=(const istream_wrapper &obj) = delete;
+  istream_wrapper &operator=(istream_wrapper &&obj);
 
   int peek(void);
   int get(void);

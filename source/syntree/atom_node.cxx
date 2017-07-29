@@ -48,7 +48,7 @@ namespace syntree
   }
 
   std::unique_ptr<rt::mp_value>
-  atom::eval(env_t env)
+  atom::eval(env_t)
   {
     return clone();
   }
