@@ -5,6 +5,20 @@ istream_wrapper::istream_wrapper(std::istream &_src)
 {
 }
 
+istream_wrapper::istream_wrapper(istream_wrapper &&mref)
+  : stream(mref.stream), line_num(mref.line_num), col_num(mref.col_num)
+{
+}
+
+istream_wrapper &
+istream_wrapper::operator=(istream_wrapper &&obj)
+{
+  using std::swap;
+
+  swap(*this, obj);
+  return *this;
+}
+
 int
 istream_wrapper::peek(void)
 {

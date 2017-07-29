@@ -5,6 +5,20 @@ parser_info::parser_info(istream_wrapper &_stream)
 {
 }
 
+parser_info::parser_info(parser_info &&mref)
+  : stream(mref.stream), buf(mref.buf)
+{
+}
+
+parser_info &
+parser_info::operator=(parser_info &&mref)
+{
+  using std::swap;
+
+  swap(*this, mref);
+  return *this;
+}
+
 mp_token_t
 parser_info::peek(void)
 {
