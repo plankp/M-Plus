@@ -1,10 +1,10 @@
 #include "mp_env.h"
 
-static rt_data_t *look_up (void *self, const char *id);
-static void mutate (void *self, const char *id, rt_data_t *val);
-static void define (void *self, const char *id, rt_data_t *val);
+static rt_data_t *mp_env_look_up (void *self, const char *id);
+static void mp_env_mutate (void *self, const char *id, rt_data_t *val);
+static void mp_env_define (void *self, const char *id, rt_data_t *val);
 static void mp_env_remove (void *self, const char *id);
-static rt_data_t *clone (void *self);
+static rt_data_t *mp_env_clone (const void *self);
 static void mp_env_dealloc (void *self);
 
 static
@@ -25,17 +25,17 @@ new_mp_env(void)
 {
   mp_env_t *ret = calloc(sizeof (mp_env_t), 1);
   ret->base = create_base_env();
-  ret->base.look_up = look_up;
-  ret->base.mutate = mutate;
-  ret->base.define = define;
+  ret->base.look_up = mp_env_look_up;
+  ret->base.mutate = mp_env_mutate;
+  ret->base.define = mp_env_define;
   ret->base.remove = mp_env_remove;
-  ret->base.clone = clone;
+  ret->base.clone = mp_env_clone;
   ret->base.dealloc = mp_env_dealloc;
   return (rt_env_t*) ret;
 }
 
 rt_data_t *
-look_up (void *_self, const char *id)
+mp_env_look_up (void *_self, const char *id)
 {
   mp_env_t *self = _self;
   const size_t offset = djb2_hash(id) % BUCKET_SIZE;
@@ -49,7 +49,7 @@ look_up (void *_self, const char *id)
 }
 
 void
-mutate (void *_self, const char *id, rt_data_t *val)
+mp_env_mutate (void *_self, const char *id, rt_data_t *val)
 {
   mp_env_t *self = _self;
   const size_t offset = djb2_hash(id) % BUCKET_SIZE;
@@ -69,7 +69,7 @@ mutate (void *_self, const char *id, rt_data_t *val)
 }
 
 void
-define (void *_self, const char *id, rt_data_t *val)
+mp_env_define (void *_self, const char *id, rt_data_t *val)
 {
   mp_env_t *self = _self;
   const size_t offset = djb2_hash(id) % BUCKET_SIZE;
@@ -113,10 +113,10 @@ mp_env_remove (void *_self, const char *id)
 }
 
 rt_data_t *
-clone (void *_self)
+mp_env_clone (const void *_self)
 {
   /* This is a deep clone */
-  mp_env_t *self = _self;
+  const mp_env_t *self = _self;
   rt_env_t *ret = new_mp_env();
   size_t i;
   for (i = 0; i < BUCKET_SIZE; ++i)

@@ -25,7 +25,7 @@ SCENARIO("list behaviour", "[list]") {
       REQUIRE(list->_list.list[1]->_char.c == 'a');
 
       // This array holds exclusive ownership of the atom: refs == 1
-      REQUIRE(list->_list.list[2]->tag == ATOM);
+      REQUIRE(list->_list.list[2]->tag == STR);
       REQUIRE(list->_list.list[2]->_atom.refs == 1);
       REQUIRE(list->_list.list[2]->_atom.size == 1);
       REQUIRE(strcmp("a", list->_list.list[2]->_atom.str) == 0);

@@ -51,6 +51,14 @@ from_func_ptr(rt_data_t *(*fptr)(rt_env_t *, rt_data_t *, rt_data_t *))
 }
 
 rt_data_t *
+from_atom(const char *str)
+{
+  rt_data_t *tmp = from_string(str);
+  tmp->tag = ATOM;
+  return tmp;
+}
+
+rt_data_t *
 from_string(const char *str)
 {
   size_t len = strlen(str);
@@ -85,7 +93,7 @@ alloc_string(size_t size)
 {
   // allocates size + 1 (null-byte)
   rt_data_t *ret = malloc(sizeof (rt_atom_t) + (size + 1) * sizeof(char));
-  ret->tag = ATOM;
+  ret->tag = STR;
   ret->_atom.refs = 1;
   ret->_atom.size = size;
   ret->_atom.str[size + 1] = '\0'; /* Set end boundary of the string */
@@ -113,6 +121,7 @@ shallow_copy(rt_data_t *src)
     case INT:   return from_long_long(src->_int.i);
     case FLOAT: return from_double(src->_float.f);
     case ERR:
+    case STR:
     case ATOM:			/* Increase reference counter */
       ++src->_atom.refs;
       return src;
@@ -139,7 +148,8 @@ deep_copy(const rt_data_t *src)
     case CHAR:  return from_char(src->_char.c);
     case INT:   return from_long_long(src->_int.i);
     case FLOAT: return from_double(src->_float.f);
-    case ATOM:  return from_string(src->_atom.str);
+    case ATOM:  return from_atom(src->_atom.str);
+    case STR:   return from_string(src->_atom.str);
     case ERR:   return from_err_msg(src->_atom.str);
     case FUNC:  return from_func_ptr(src->_func.fptr);
     case ENV:   return env_clone(&src->_env);
@@ -175,6 +185,7 @@ dealloc(rt_data_t **src)
 	  if (--(*src)->_func.refs > 0) return;
 	  break;
 	case ERR:
+	case STR:
 	case ATOM:
 	  if (--(*src)->_atom.refs > 0) return;
 	  break;
@@ -225,7 +236,7 @@ env_remove(rt_env_t *env, const char *id)
 }
 
 rt_data_t *
-env_clone(rt_env_t *env)
+env_clone(const rt_env_t *env)
 {
   return env->clone(env);
 }

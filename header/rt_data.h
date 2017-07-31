@@ -20,9 +20,10 @@ extern "C"
   X(INT)					\
   X(FLOAT)					\
   X(ATOM)					\
+  X(STR)					\
+  X(ERR)					\
   X(FUNC)					\
   X(ENV)					\
-  X(ERR)					\
   X(LIST)
 
 #define X(n) n,
@@ -40,7 +41,7 @@ extern "C"
     void (*mutate)(void *self, const char *id, rt_data_t *val);
     void (*define)(void *self, const char *id, rt_data_t *val);
     void (*remove)(void *self, const char *id);
-    rt_data_t *(*clone)(void *self);
+    rt_data_t *(*clone)(const void *self);
     void (*dealloc)(void *self);
   } rt_env_t;
 
@@ -106,6 +107,8 @@ extern "C"
 						     rt_data_t *,
 						     rt_data_t *));
 
+  extern rt_data_t *from_atom(const char *str);
+
   extern rt_data_t *from_string(const char *str);
 
   extern rt_data_t *from_err_msg(const char *str);
@@ -130,7 +133,7 @@ extern "C"
 
   extern void env_remove(rt_env_t *env, const char *id);
 
-  extern rt_data_t *env_clone(rt_env_t *env);
+  extern rt_data_t *env_clone(const rt_env_t *env);
 
   extern rt_env_t create_base_env(void);
 

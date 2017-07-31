@@ -7,7 +7,7 @@
 SCENARIO("atom behaviour", "[atom]") {
   GIVEN("an atom storing hello") {
     std::string raw = "hello";
-    rt_data_t *atom = from_string(raw.c_str());
+    rt_data_t *atom = from_atom(raw.c_str());
 
     REQUIRE(atom->tag == ATOM);
     REQUIRE(raw.length() == atom->_atom.size);

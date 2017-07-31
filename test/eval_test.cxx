@@ -3,6 +3,7 @@
 #include "eval.h"
 #include "mp_env.h"
 #include "rt_data.h"
+#include "rt_utils.h"
 
 #define PRIM_FUNCS				\
   DEF_GENERIC(add, +)				\
@@ -54,36 +55,6 @@ DEF_GENERIC(error, error);
   return env;
 }
 
-static
-rt_data_t *
-gen_nullary_expr(const char *op)
-{
-  // Ownership of lhs and rhs is transfered here
-  rt_data_t *atm = from_string(op);
-  rt_data_t *tmp[] = { atm };
-  rt_data_t *list = from_list(1, tmp);
-
-  dealloc(&atm);
-
-  return list;
-}
-
-static
-rt_data_t *
-gen_binary_expr(const char *op, rt_data_t *lhs, rt_data_t *rhs)
-{
-  // Ownership of lhs and rhs is transfered here
-  rt_data_t *atm = from_string(op);
-  rt_data_t *tmp[] = { atm, lhs, rhs };
-  rt_data_t *list = from_list(3, tmp);
-
-  dealloc(&atm);
-  dealloc(&lhs);
-  dealloc(&rhs);
-
-  return list;
-}
-
 TEST_CASE("error behaviour", "[err]") {
   rt_data_t *err = generic_error(nullptr, nullptr, nullptr);
   REQUIRE(err->tag == ERR);
@@ -101,9 +72,9 @@ SCENARIO("eval behaviour", "[eval]") {
     }
 
     WHEN("eval (+ 1 2)") {
-      rt_data_t *exp = gen_binary_expr("+",
-				       from_long_long(1),
-				       from_long_long(2));
+      rt_data_t *exp = make_binary_expr(from_atom("+"),
+					from_long_long(1),
+					from_long_long(2));
       REQUIRE(exp->tag == LIST);
       REQUIRE(exp->_list.list[0]->tag == ATOM);
       REQUIRE(exp->_list.list[1]->tag == INT);
@@ -120,13 +91,13 @@ SCENARIO("eval behaviour", "[eval]") {
 
     AND_WHEN("eval (* (- 0 (+ 1 2)) 3)") {
       rt_data_t *exp =
-	gen_binary_expr("*",
-			gen_binary_expr("-",
-					from_long_long(0),
-					gen_binary_expr("+",
-							from_long_long(1),
-							from_long_long(2))),
-			from_long_long(3));
+	make_binary_expr(from_atom("*"),
+			 make_binary_expr(from_atom("-"),
+					  from_long_long(0),
+					  make_binary_expr(from_atom("+"),
+							   from_long_long(1),
+							   from_long_long(2))),
+			 from_long_long(3));
       REQUIRE(exp->tag == LIST);
       REQUIRE(exp->_list.list[0]->tag == ATOM);
       REQUIRE(exp->_list.list[1]->tag == LIST);
@@ -143,7 +114,9 @@ SCENARIO("eval behaviour", "[eval]") {
 
     AND_WHEN("eval (/ 3 (error))") {
       rt_data_t *exp =
-	gen_binary_expr("/", from_long_long(3), gen_nullary_expr("error"));
+        make_binary_expr(from_atom("/"),
+			 from_long_long(3),
+			 make_nullary_expr(from_atom("error")));
       REQUIRE(exp->tag == LIST);
       REQUIRE(exp->_list.list[0]->tag == ATOM);
       REQUIRE(exp->_list.list[1]->tag == INT);

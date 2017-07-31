@@ -11,6 +11,7 @@ eval(rt_env_t *env, rt_data_t *data)
     case FLOAT:
     case FUNC:
     case ERR:
+    case STR:
     case ENV:			// Shallow copy
       return shallow_copy(data);
     case ATOM:			// Deep clone
