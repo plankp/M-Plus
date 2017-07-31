@@ -1,5 +1,7 @@
 #include "rt_data.h"
 
+#include <stdio.h>
+
 static
 const char *
 rt_tag_to_str(const rt_tag_t tag)
@@ -22,12 +24,12 @@ from_char(char c)
 }
 
 rt_data_t *
-from_long_long(long long int lli)
+from_int64(int64_t i64)
 {
   // Should cache value -128 to 128
   rt_data_t *ret = malloc(sizeof(rt_int_t));
   ret->tag = INT;
-  ret->_int.i = lli;
+  ret->_int.i = i64;
   return ret;
 }
 
@@ -118,7 +120,7 @@ shallow_copy(rt_data_t *src)
     {
       /* Primitives always deep copy */
     case CHAR:  return from_char(src->_char.c);
-    case INT:   return from_long_long(src->_int.i);
+    case INT:   return from_int64(src->_int.i);
     case FLOAT: return from_double(src->_float.f);
     case ERR:
     case STR:
@@ -134,6 +136,7 @@ shallow_copy(rt_data_t *src)
     case LIST:			/* Shallow copy all elements */
       return from_list(src->_list.size, src->_list.list);
     default:
+      fprintf(stderr, "Attempt to shallow copy type: %s(%d)\n", rt_tag_to_str(src->tag), src->tag);
       assert(false);
     }
 }
@@ -146,7 +149,7 @@ deep_copy(const rt_data_t *src)
     {
       /* Primitives always deep copy */
     case CHAR:  return from_char(src->_char.c);
-    case INT:   return from_long_long(src->_int.i);
+    case INT:   return from_int64(src->_int.i);
     case FLOAT: return from_double(src->_float.f);
     case ATOM:  return from_atom(src->_atom.str);
     case STR:   return from_string(src->_atom.str);
@@ -167,8 +170,6 @@ deep_copy(const rt_data_t *src)
       assert(false);
     }
 }
-
-#include <stdio.h>
 
 void
 dealloc(rt_data_t **src)
@@ -203,11 +204,12 @@ dealloc(rt_data_t **src)
 	    break;
 	  }
 	default:
-	  fprintf(stderr, "Attempt to free type: %s\n", rt_tag_to_str((*src)->tag));
+	  fprintf(stderr, "Attempt to free type: %s(%d)\n",
+		  rt_tag_to_str((*src)->tag),
+		  (*src)->tag);
 	  assert(false);
 	}
       free(*src);
-      *src = NULL;
     }
 }
 

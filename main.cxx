@@ -1,8 +1,5 @@
 #include "lexer.hxx"
 #include "parser.hxx"
-#include "tree_formatter.hxx"
-
-#include "ext_unary_func.hxx"
 
 #include <fstream>
 #include <iostream>
@@ -19,26 +16,21 @@ main (int argc, char **argv)
   try
     {
       std::ifstream s(argv[1], std::ios::in);
+      if (!s.is_open())
+	{
+	  std::cerr << "File " << argv[1] << " cannot be read" << std::endl;
+	  return 2;
+	}
+
       istream_wrapper wrap(s);
       parser_info info(wrap);
 
-      std::map<std::string, std::shared_ptr<rt::mp_value>> env
-      {
-	{ "print", std::shared_ptr<rt::mp_value>(new rt::ext::unary_func([](std::unique_ptr<rt::mp_value> x) {
-		std::cout << x->to_str() << std::endl;
-		return x; })) }
-      };
-
       auto tree = parse(info);
-      tree_formatter formatter;
-      formatter.visit(*tree);
-      std::cout << "\nEval demo:" << std::endl
-       		<< formatter.get_text() << std::endl;
-      auto res = tree->eval(env);
-      if (res)
-	{
-	  std::cout << res->to_str() << std::endl;
-	}
+      // debug print tree here!
+      auto str = expr_to_str(tree);
+      std::cout << str << std::endl;
+      free(str);
+      dealloc(&tree);
     }
   catch (std::exception &err)
     {

@@ -17,9 +17,9 @@
   generic_##name(rt_env_t *env, rt_data_t *lhs, rt_data_t *rhs)		\
   {									\
     if (lhs->tag == rhs->tag && lhs->tag == INT)			\
-      { return from_long_long(lhs->_int.i op rhs->_int.i); }		\
+      { return from_int64(lhs->_int.i op rhs->_int.i); }		\
     if (lhs->tag == rhs->tag && lhs->tag == FLOAT)			\
-      { return from_long_long(lhs->_float.f op rhs->_float.f); }	\
+      { return from_int64(lhs->_float.f op rhs->_float.f); }	\
     return from_err_msg("ILLEGAL DATA TYPE -- " #op);			\
   }
 
@@ -73,8 +73,8 @@ SCENARIO("eval behaviour", "[eval]") {
 
     WHEN("eval (+ 1 2)") {
       rt_data_t *exp = make_binary_expr(from_atom("+"),
-					from_long_long(1),
-					from_long_long(2));
+					from_int64(1),
+					from_int64(2));
       REQUIRE(exp->tag == LIST);
       REQUIRE(exp->_list.list[0]->tag == ATOM);
       REQUIRE(exp->_list.list[1]->tag == INT);
@@ -93,11 +93,11 @@ SCENARIO("eval behaviour", "[eval]") {
       rt_data_t *exp =
 	make_binary_expr(from_atom("*"),
 			 make_binary_expr(from_atom("-"),
-					  from_long_long(0),
+					  from_int64(0),
 					  make_binary_expr(from_atom("+"),
-							   from_long_long(1),
-							   from_long_long(2))),
-			 from_long_long(3));
+							   from_int64(1),
+							   from_int64(2))),
+			 from_int64(3));
       REQUIRE(exp->tag == LIST);
       REQUIRE(exp->_list.list[0]->tag == ATOM);
       REQUIRE(exp->_list.list[1]->tag == LIST);
@@ -115,7 +115,7 @@ SCENARIO("eval behaviour", "[eval]") {
     AND_WHEN("eval (/ 3 (error))") {
       rt_data_t *exp =
         make_binary_expr(from_atom("/"),
-			 from_long_long(3),
+			 from_int64(3),
 			 make_nullary_expr(from_atom("error")));
       REQUIRE(exp->tag == LIST);
       REQUIRE(exp->_list.list[0]->tag == ATOM);

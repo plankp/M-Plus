@@ -4,7 +4,7 @@
 
 SCENARIO("list behaviour", "[list]") {
   GIVEN("a list storing 1, 'a', \"a\"") {
-    rt_data_t *raw[3] = { from_long_long(1),
+    rt_data_t *raw[3] = { from_int64(1),
 			  from_char('a'),
 			  from_string("a") };
     rt_data_t *list = from_list(3, raw);

@@ -4,7 +4,7 @@
 
 SCENARIO("int behaviour", "[int]") {
   GIVEN("an int storing 10") {
-    rt_data_t *vint = from_long_long(10);
+    rt_data_t *vint = from_int64(10);
 
     REQUIRE(vint->tag == INT);
     REQUIRE(vint->_int.i == 10);

@@ -1,5 +1,7 @@
 #include "parser.hxx"
 
+#include <stdio.h>
+
 parser_info::parser_info(istream_wrapper &_stream)
   : stream(_stream), buf()
 {
@@ -112,53 +114,50 @@ optional(parser_info &src, std::vector<mp_token_t::tok_type> types,
   return false;
 }
 
-std::unique_ptr<syntree::expressions>
+rt_data_t *
 parse(parser_info &src)
 {
   auto tree = parse_expressions(src);
   one_of(src, { mp_token_t::S_EOF });
-  return tree;
+
+  if (tree.size() == 1) return tree[0];
+
+  // assume its a do-end expression
+  tree.insert(tree.begin(), from_atom("do"));
+  auto ret = from_list(tree.size(), tree.data());
+  for (size_t i = 0; i < tree.size(); ++i) dealloc(&tree[i]);
+  return ret;
 }
 
-std::unique_ptr<syntree::expressions>
+std::vector<rt_data_t*>
 parse_expressions (parser_info &src)
 {
   // = expression
   // | expression ';' expressions
 
-  auto tree = std::unique_ptr<syntree::expressions>(new syntree::expressions);
-  //  while (true)
-  do
-    {
-      tree->push_back({ parse_expression(src) });
-      //      if (!optional(src, { mp_token_t::Y_SEMI })) break;
-    }
+  std::vector<rt_data_t*> vec;
+  do vec.push_back(parse_expression(src));
   while (optional(src, { mp_token_t::Y_SEMI }));
-  return tree;
+  return vec;
 }
 
-std::unique_ptr<syntree::expressions>
+std::vector<rt_data_t*>
 parse_argument_list (parser_info &src)
 {
   // = expression
   // | expression ',' argument_list
 
-  auto tree = std::unique_ptr<syntree::expressions>(new syntree::expressions);
-  //  while (true)
-  do
-    {
-      tree->push_back({ parse_expression(src) });
-      //  if (!optional(src, { mp_token_t::Y_COMMA })) break;
-    }
+  std::vector<rt_data_t*> vec;
+  do vec.push_back(parse_expression(src));
   while (optional(src, { mp_token_t::Y_COMMA }));
-  return tree;
+  return vec;
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_expression(parser_info &src)
 {
-  // = IDENT '=' lazy
-  // | IDENT '<-' lazy
+  // = IDENT '=' expression
+  // | IDENT '<-' expression
   // | lazy
 
   mp_token_t ident;
@@ -167,7 +166,9 @@ parse_expression(parser_info &src)
       mp_token_t op;
       if (optional(src, { mp_token_t::Y_DECL, mp_token_t::Y_SET }, op))
 	{
-	  return std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::ident>(new syntree::ident(ident)), { parse_expression(src) }));
+	  return make_binary_expr(from_atom(op.text.c_str()),
+				  from_atom(ident.text.c_str()),
+				  parse_expression(src));
 	}
 
       // unget ident, its part of another expression
@@ -176,7 +177,7 @@ parse_expression(parser_info &src)
   return parse_lazy(src);
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_lazy (parser_info &src)
 {
   // = 'lazy' or
@@ -185,12 +186,13 @@ parse_lazy (parser_info &src)
   mp_token_t tok;
   if (optional(src, { mp_token_t::K_LAZY }, tok))
     {
-      return std::unique_ptr<syntree::prefix>(new syntree::prefix(tok, { parse_or(src) }));
+      return make_unary_expr(from_atom(tok.text.c_str()),
+			     parse_or(src));
     }
   return parse_or(src);
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_or (parser_info &src)
 {
   // = or 'or' and
@@ -200,12 +202,14 @@ parse_or (parser_info &src)
   mp_token_t tok;
   while (optional(src, { mp_token_t::K_OR }, tok))
     {
-      lhs = std::unique_ptr<syntree::binop>(new syntree::binop(tok, { std::move(lhs) }, { parse_and(src) }));
+      lhs = make_binary_expr(from_atom(tok.text.c_str()),
+			     lhs,
+			     parse_and(src));
     }
   return lhs;
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_and (parser_info &src)
 {
   // = and 'and' rel_like
@@ -215,12 +219,14 @@ parse_and (parser_info &src)
   mp_token_t tok;
   while (optional(src, { mp_token_t::K_AND }, tok))
     {
-      lhs = std::unique_ptr<syntree::binop>(new syntree::binop(tok, { std::move(lhs) }, { parse_rel_like(src) }));
+      lhs = make_binary_expr(from_atom(tok.text.c_str()),
+			     lhs,
+			     parse_rel_like(src));
     }
   return lhs;
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_rel_like (parser_info &src)
 {
   // = cons '<' cons
@@ -235,27 +241,31 @@ parse_rel_like (parser_info &src)
   mp_token_t tok;
   if (optional(src, { mp_token_t::Y_LT, mp_token_t::Y_GT, mp_token_t::Y_LE, mp_token_t::Y_GE, mp_token_t::Y_EQL, mp_token_t::Y_NEQ }, tok))
     {
-      return std::unique_ptr<syntree::binop>(new syntree::binop(tok, { std::move(lhs) }, { parse_cons(src) }));
+      return make_binary_expr(from_atom(tok.text.c_str()),
+			      lhs,
+			      parse_cons(src));
     }
   return lhs;
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_cons (parser_info &src)
 {
   // = add_like
   // | add_like ':' cons
 
-  std::unique_ptr<syntree::ast> tree = parse_add_like(src);
+  auto tree = parse_add_like(src);
   mp_token_t tok;
   if (optional(src, { mp_token_t::Y_COLON }, tok))
     {
-      return std::unique_ptr<syntree::binop>(new syntree::binop(tok, { parse_cons(src) }, { std::move(tree) }));
+      return make_binary_expr(from_atom(tok.text.c_str()),
+			      tree,
+			      parse_cons(src));
     }
   return tree;
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_add_like (parser_info &src)
 {
   // = add_like '+' mul_like
@@ -266,12 +276,14 @@ parse_add_like (parser_info &src)
   mp_token_t tok;
   while (optional(src, { mp_token_t::Y_ADD, mp_token_t::Y_SUB }, tok))
     {
-      tree = std::unique_ptr<syntree::binop>(new syntree::binop(tok, { std::move(tree) }, { parse_mul_like(src) }));
+      tree = make_binary_expr(from_atom(tok.text.c_str()),
+			      tree,
+			      parse_mul_like(src));
     }
   return tree;
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_mul_like (parser_info &src)
 {
   // = mul_like '*' prefix
@@ -283,12 +295,14 @@ parse_mul_like (parser_info &src)
   mp_token_t tok;
   while (optional(src, { mp_token_t::Y_MUL, mp_token_t::Y_DIV, mp_token_t::K_MOD }, tok))
     {
-      tree = std::unique_ptr<syntree::binop>(new syntree::binop(tok, { std::move(tree) }, { parse_prefix(src) }));
+      tree = make_binary_expr(from_atom(tok.text.c_str()),
+			      tree,
+			      parse_prefix(src));
     }
   return tree;
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_prefix (parser_info &src)
 {
   // = '+' exponent
@@ -298,12 +312,13 @@ parse_prefix (parser_info &src)
   mp_token_t tok;
   if (optional(src, { mp_token_t::Y_ADD, mp_token_t::Y_SUB }, tok))
     {
-      return std::unique_ptr<syntree::prefix>(new syntree::prefix(tok, { parse_exponent(src) }));
+      return make_unary_expr(from_atom(tok.text.c_str()),
+			     parse_expression(src));
     }
   return parse_exponent(src);
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_exponent (parser_info &src)
 {
   // = postfix '^' prefix
@@ -313,12 +328,14 @@ parse_exponent (parser_info &src)
   mp_token_t tok;
   if (optional(src, { mp_token_t::Y_POW }, tok))
     {
-      return std::unique_ptr<syntree::binop>(new syntree::binop(tok, { std::move(tree) }, { parse_prefix(src) }));
+      return make_binary_expr(from_atom(tok.text.c_str()),
+			      tree,
+			      parse_prefix(src));
     }
   return tree;
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_postfix (parser_info &src)
 {
   // = fapply '%'
@@ -328,12 +345,13 @@ parse_postfix (parser_info &src)
   mp_token_t tok;
   if (optional(src, { mp_token_t::Y_PERCENT }, tok))
     {
-      return std::unique_ptr<syntree::postfix>(new syntree::postfix(tok, { std::move(tree) }));
+      return make_unary_expr(from_atom(tok.text.c_str()),
+			     tree);
     }
   return tree;
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_fapply (parser_info &src)
 {
   // = parse_fapply '(' argument_list ')'
@@ -345,36 +363,37 @@ parse_fapply (parser_info &src)
     {
       if (optional(src, { mp_token_t::P_RPAREN }))
 	{
-	  return std::unique_ptr<syntree::fapply>(new syntree::fapply({ std::move(tree) }, nullptr));
+	  return make_nullary_expr(tree);
 	}
       auto params = parse_argument_list(src);
       one_of(src, { mp_token_t::P_RPAREN });
       // f(a, b, c) becomes f(a)(b)(c)
-      for (size_t i = 0; i < params->size(); ++i)
+      for (size_t i = 0; i < params.size(); ++i)
 	{
-	  auto tmp = std::unique_ptr<syntree::fapply>(new syntree::fapply({ std::move(tree) }, (*params)[i]));
-	  tree = std::move(tmp);
+	  tree = make_unary_expr(tree, params[i]);
 	}
     }
   return tree;
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_fcompose (parser_info &src)
 {
   // = qexpr '.' fcompose
   // | qexpr
 
-  std::unique_ptr<syntree::ast> tree = parse_qexpr(src);
+  auto tree = parse_qexpr(src);
   mp_token_t tok;
   if (optional(src, { mp_token_t::Y_PERIOD }, tok))
     {
-      return std::unique_ptr<syntree::binop>(new syntree::binop(tok, { std::move(tree) }, { parse_fcompose(src) }));
+      return make_binary_expr(from_atom(tok.text.c_str()),
+			      tree,
+			      parse_fcompose(src));
     }
   return tree;
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_qexpr (parser_info &src)
 {
   // = '&' qexpr
@@ -383,12 +402,13 @@ parse_qexpr (parser_info &src)
   mp_token_t tok;
   if (optional(src, { mp_token_t::Y_QEXPR }, tok))
     {
-      return std::unique_ptr<syntree::prefix>(new syntree::prefix(tok, { parse_qexpr(src) }));
+      return make_unary_expr(from_atom(tok.text.c_str()),
+			     parse_qexpr(src));
     }
   return parse_do_end(src);
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_do_end (parser_info &src)
 {
   // = 'do' 'end' #=> Parser error
@@ -404,12 +424,18 @@ parse_do_end (parser_info &src)
 	}
       auto exprs = parse_expressions(src);
       one_of(src, { mp_token_t::K_END });
-      return static_cast<std::unique_ptr<syntree::ast>>(std::move(exprs));
+      exprs.insert(exprs.begin(), from_atom("do"));
+      auto ret = from_list(exprs.size(), exprs.data());
+      for (size_t i = 0; i < exprs.size(); ++i)
+	{
+	  dealloc(&exprs[i]);
+	}
+      return ret;
     }
   return parse_if_expr(src);
 }
 
-std::unique_ptr<syntree::ast>
+rt_data_t *
 parse_if_expr (parser_info &src)
 {
   // = '{' '}' #=> Parser Error
@@ -418,8 +444,8 @@ parse_if_expr (parser_info &src)
   //
   // <<cases>>
   // = expression 'else'
-  // | expression 'if' predicate
-  // | expression 'if' predicate ',' <<cases>>
+  // | expression 'if' expression
+  // | expression 'if' expression ',' <<cases>>
 
   if (optional(src, { mp_token_t::P_LCURL }))
     {
@@ -429,26 +455,32 @@ parse_if_expr (parser_info &src)
 	  throw parser_error(tok, "{ } without cases is an illegal construct");
 	}
 
-      auto tree = std::unique_ptr<syntree::cond_expr>(new syntree::cond_expr);
-
+      std::vector<rt_data_t*> tree;
       for (;;)
 	{
-	  auto expr = parse_expressions(src);
+	  auto expr = parse_expression(src);
 	  mp_token_t tok = one_of(src, { mp_token_t::K_ELSE, mp_token_t::K_IF });
 	  if (tok.type == mp_token_t::K_IF)
 	    {
-	      tree->push_if_node(std::shared_ptr<syntree::binop>(new syntree::binop(tok, { parse_expressions(src) }, { std::move(expr) })));
-
+	      tree.push_back(make_binary_expr(from_atom(tok.text.c_str()),
+					      parse_expression(src),
+					      expr));
 	      if (optional(src, { mp_token_t::Y_COMMA })) continue;
 	      break;
 	    }
 	  // else clause
-	  // CONSIDER MAKING IF AND ELSE THEIR OWN CLASSES
-	  tree->set_else_node(std::shared_ptr<syntree::postfix>(new syntree::postfix(tok, { std::move(expr) })));
+	  tree.push_back(make_unary_expr(from_atom(tok.text.c_str()),
+					 expr));
 	  break;
 	}
       one_of(src, { mp_token_t::P_RCURL });
-      return static_cast<std::unique_ptr<syntree::ast>>(std::move(tree));
+      tree.insert(tree.begin(), from_atom("cond"));
+      auto ret = from_list(tree.size(), tree.data());
+      for (size_t i = 0; i < tree.size(); ++i)
+	{
+	  dealloc(&tree[i]);
+	}
+      return ret;
     }
   return parse_primitive(src);
 }
@@ -458,7 +490,28 @@ static const std::vector<mp_token_t::tok_type> impl_produce
   mp_token_t::Y_YIELD, mp_token_t::Y_MACRO
 };
 
-std::unique_ptr<syntree::ast>
+static
+long long
+conv_ll(const std::string& text)
+{
+  if (text[0] == '0')
+    {
+      // Either its zero or it has a different base
+      if (text.size() == 1) return 0;
+      switch (text[1])
+	{
+	case 'b': return std::stoll(text.substr(2), nullptr, 2);
+	case 'c': return std::stoll(text.substr(2), nullptr, 8);
+	case 'd': return std::stoll(text.substr(2), nullptr, 10);
+	case 'x': return std::stoll(text.substr(2), nullptr, 16);
+	default:
+	  throw std::invalid_argument("Unknown number literal: " + text);
+	}
+    }
+  return std::stoll(text);
+}
+
+rt_data_t *
 parse_primitive (parser_info &src)
 {
   // = NUMBER
@@ -480,16 +533,18 @@ parse_primitive (parser_info &src)
   // | IDENT ',' <<params>>
   if (optional(src, { mp_token_t::P_LSQUARE }))
     {
-      if (optional(src, { mp_token_t::P_RSQUARE })) return std::unique_ptr<syntree::array>(new syntree::array);
+      if (optional(src, { mp_token_t::P_RSQUARE })) return alloc_list(0);
       auto datum = parse_argument_list(src);
       
       mp_token_t tok = one_of(src, { mp_token_t::P_RSQUARE });
-      auto tree = std::unique_ptr<syntree::array>(new syntree::array);
-      for (size_t i = datum->size(); i > 0; --i)
+      auto tree = alloc_list(0);
+      for (size_t i = datum.size(); i > 0; --i)
 	{
-	  tree->push_front((*datum)[i - 1]);
+	  tree = make_binary_expr(from_atom(":"),
+				  datum[i - 1],
+				  tree);
 	}
-      return static_cast<std::unique_ptr<syntree::ast>>(std::move(tree));
+      return tree;
     }
   if (optional(src, { mp_token_t::P_LPAREN }))
     {
@@ -504,10 +559,9 @@ parse_primitive (parser_info &src)
 	   * We create an <ident> with <tok.text> of <"">
 	   */
 	  mp_token_t op = one_of(src, impl_produce);
-	  mp_token_t imp{ mp_token_t::L_IDENT,
-	      op.line_num, op.col_num, "" };
-	  std::shared_ptr<syntree::ident> fake_param(new syntree::ident(imp));
-	  return std::unique_ptr<syntree::binop>(new syntree::binop(op, fake_param, parse_expression(src)));
+	  return make_binary_expr(from_atom(op.text.c_str()),
+				  from_atom(""),
+				  parse_expression(src));
 	}
       // Assume it is a function
       mp_token_t p;
@@ -527,7 +581,9 @@ parse_primitive (parser_info &src)
 	      auto tree = parse_expression(src);
 	      for (size_t i = ps.size(); i > 0; --i)
 		{
-		  tree = std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::ident>(new syntree::ident(ps[i - 1])), { std::move(tree) }));
+		  tree = make_binary_expr(from_atom(op.text.c_str()),
+					  from_atom(ps[i - 1].text.c_str()),
+					  tree);
 		}
 	      return tree;
 	    }
@@ -537,11 +593,13 @@ parse_primitive (parser_info &src)
 	      if (optional(src, impl_produce, op))
 		{
 		  // Has to be a function in form of (a) -> <<expr>>
-		  return std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::ident>(new syntree::ident(p)), { parse_expression(src) }));
+		  return make_binary_expr(from_atom(op.text.c_str()),
+					  from_atom(p.text.c_str()),
+					  parse_expression(src));
 		}
 	      // Its an expression ( x )
 	      // => return x as syntree
-	      return std::unique_ptr<syntree::ident>(new syntree::ident(p));
+	      return from_atom(p.text.c_str());
 	    }
 	  // Unshift token: its an expression, not a function
 	  src.unget(p);
@@ -557,13 +615,19 @@ parse_primitive (parser_info &src)
       mp_token_t op;
       if (optional(src, impl_produce, op))
 	{
-	  return std::unique_ptr<syntree::binop>(new syntree::binop(op, std::shared_ptr<syntree::ident>(new syntree::ident(tok)), { parse_expression(src) }));
+	  return make_binary_expr(from_atom(op.text.c_str()),
+				  from_atom(tok.text.c_str()),
+				  parse_expression(src));
 	}
-      return std::unique_ptr<syntree::ident>(new syntree::ident(tok));
+      return from_atom(tok.text.c_str());
     }
   if (optional(src, { mp_token_t::L_NUMBER }, tok))
     {
-      return std::unique_ptr<syntree::num>(new syntree::num(tok));
+      if (tok.text.find('.') == std::string::npos)
+	{
+	  return from_int64(conv_ll(tok.text));
+	}
+      return from_double(std::stod(tok.text));
     }
-  return std::unique_ptr<syntree::atom>(new syntree::atom(one_of(src, { mp_token_t::L_ATOM })));
+  return from_string(one_of(src, { mp_token_t::L_ATOM }).text.c_str());
 }

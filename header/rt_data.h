@@ -3,8 +3,9 @@
 
 #include <assert.h>
 #include <stddef.h>
-#include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 #ifndef __cplusplus
 #include <stdbool.h>
@@ -54,7 +55,7 @@ extern "C"
   typedef struct rt_int_t
   {
     rt_tag_t tag;
-    long long int i;
+    int64_t i;
   } rt_int_t;
 
   typedef struct rt_float_t
@@ -99,7 +100,7 @@ extern "C"
 
   extern rt_data_t *from_char(char c);
 
-  extern rt_data_t *from_long_long(long long int lli);
+  extern rt_data_t *from_int64(int64_t lli);
 
   extern rt_data_t *from_double(double d);
 
