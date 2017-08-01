@@ -8,6 +8,7 @@ A programming language that took a lot from [NtShell](https://github.com/plankp/
 
 You need:
 *  CMake >= 2.8.12
+*  C99 supporting compiler
 *  C++11 supporting compiler
 
 ```
@@ -20,3 +21,7 @@ You need:
 ## To run M+ interpreter
 
 `mplus [MPlus script]`
+
+## To code in M+
+
+See the *__sample__* code in the `sample` folder. That hopefully helps! 
