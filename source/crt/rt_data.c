@@ -149,6 +149,8 @@ shallow_copy(rt_data_t *src)
     case ENV:			/* Increase reference counter */
       ++src->_env.refs;
       return src;
+    case UDT:			/* Based on custom implementation */
+      return src->_udt.sclone(src);
     case ARRAY:			/* Shallow copy all elements */
       return from_array(src->_list.size, src->_list.list);
     case LIST:			/* Shallow copy all elements */
@@ -174,6 +176,7 @@ deep_copy(const rt_data_t *src)
     case ERR:   return from_err_msg(src->_atom.str);
     case FUNC:  return from_func_ptr(src->_func.fptr);
     case ENV:   return env_clone(&src->_env);
+    case UDT:   return src->_udt.dclone(src);
     case ARRAY:
     case LIST:			/* Copy every element */
       {
@@ -214,6 +217,9 @@ dealloc(rt_data_t **src)
 	  if (--(*src)->_env.refs > 0) return;
 	  (*src)->_env.dealloc(*src);
 	  break;
+	case UDT:
+	  if (!(*src)->_udt.dealloc(*src)) return;
+	  break;
 	case ARRAY:
 	case LIST:		/* Deallocate every element */
 	  {
@@ -232,41 +238,4 @@ dealloc(rt_data_t **src)
 	}
       free(*src);
     }
-}
-
-rt_data_t *
-env_look_up(rt_env_t *env, const char *id)
-{
-  return env->look_up(env, id);
-}
-
-void
-env_mutate(rt_env_t *env, const char *id, rt_data_t *val)
-{
-  env->mutate(env, id, val);
-}
-
-void
-env_define(rt_env_t *env, const char *id, rt_data_t *val)
-{
-  env->define(env, id, val);
-}
-
-void
-env_remove(rt_env_t *env, const char *id)
-{
-  env->remove(env, id);
-}
-
-rt_data_t *
-env_clone(const rt_env_t *env)
-{
-  return env->clone(env);
-}
-
-rt_env_t
-create_base_env(void)
-{
-  return (rt_env_t)
-    { .tag = ENV, .refs = 1 }; /* All other fields initialize as NULL */
 }

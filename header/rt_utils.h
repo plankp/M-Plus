@@ -11,11 +11,9 @@
 
 #ifndef __cplusplus
 #include <stdbool.h>
-#define restrict restrict
 #endif
 
 #ifdef __cplusplus
-#define restrict
 extern "C"
 {
 #endif
@@ -36,14 +34,12 @@ extern "C"
 
   // *lhs and *rhs are swapped
 
-  extern void swap_expr(rt_data_t **restrict lhs, rt_data_t **restrict rhs);
+  extern void swap_expr(rt_data_t **lhs, rt_data_t **rhs);
 
   extern void init_default_env(rt_env_t *env);
 
 #ifdef __cplusplus
 };
 #endif
-
-#undef restrict
 
 #endif /* !_C_MP_RT_UTILS_H__ */

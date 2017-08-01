@@ -183,8 +183,11 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool atm_should_dcpy)
 	      case FUNC:
 		ret = base->_func.fptr(env, NULL, NULL);
 		break;
+	      case UDT:
+		ret = base->_udt.apply(env, NULL);
+		break;
 	      default:
-		ret = from_err_msg("TYPE IS NOT APPLIABLE -- EVAL");
+		ret = from_err_msg("TYPE IS NOT APPLIABLE -- APPLY");
 		break;
 	      }
 	    GUARD_END(base, g1);
@@ -201,8 +204,11 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool atm_should_dcpy)
 	      case FUNC:
 		ret = base->_func.fptr(env, p1, NULL);
 		break;
+	      case UDT:
+		ret = base->_udt.apply(env, p1);
+		break;
 	      default:
-		ret = from_err_msg("TYPE IS NOT APPLIABLE -- EVAL");
+		ret = from_err_msg("TYPE IS NOT APPLIABLE -- APPLY");
 		break;
 	      }
 	    GUARD_END(p1, g2);
@@ -222,7 +228,7 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool atm_should_dcpy)
 		ret = base->_func.fptr(env, p1, p2);
 		break;
 	      default:
-		ret = from_err_msg("TYPE IS NOT APPLIABLE -- EVAL");
+		ret = from_err_msg("TYPE IS NOT APPLIABLE -- APPLY");
 		break;
 	      }
 	    GUARD_END(p2, g3);

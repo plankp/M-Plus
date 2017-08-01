@@ -146,6 +146,15 @@ expr_to_str(rt_data_t *data)
 	memcpy(str, tmp, s);
 	break;
       }
+    case UDT:
+      if (data->_udt.to_str) str = data->_udt.to_str(data);
+      else
+	{
+	  const size_t s = strlen(data->_udt.type) + 3;
+	  str = malloc(s * sizeof (char));
+	  sprintf(str, "<%s>", data->_udt.type);
+	}
+      break;
     case LIST:
       str = generate(data, '(', ')', ' ');
       break;
@@ -174,6 +183,7 @@ expr_is_truthy (rt_data_t *data)
     case ERR:   return false;
     case FUNC:  return true;
     case ENV:   return true;
+    case UDT:   return data->_udt.to_bool(data);
     case ARRAY:
     case LIST:  return data->_list.size != 0;
     default:    return true;
@@ -181,7 +191,7 @@ expr_is_truthy (rt_data_t *data)
 }
 
 void
-swap_expr(rt_data_t **restrict lhs, rt_data_t **restrict rhs)
+swap_expr(rt_data_t **lhs, rt_data_t **rhs)
 {
   rt_data_t *tmp = *lhs;
   *lhs = *rhs;
