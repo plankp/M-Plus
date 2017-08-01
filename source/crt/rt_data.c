@@ -78,16 +78,24 @@ from_err_msg(const char *str)
 }
 
 rt_data_t *
-from_list(size_t size, rt_data_t *ptr[])
+from_array(size_t size, rt_data_t *ptr[])
 {
   // Performs a shallow copy
-  rt_data_t *tmp = alloc_list(size);
+  rt_data_t *tmp = alloc_array(size);
   size_t i;
   for (i = 0; i < size; ++i)
     {
       tmp->_list.list[i] = shallow_copy(ptr[i]);
     }
   return tmp;
+}
+
+rt_data_t *
+from_list(size_t size, rt_data_t *ptr[])
+{
+  rt_data_t *ret = from_array(size, ptr);
+  ret->tag = LIST;
+  return ret;
 }
 
 rt_data_t *
@@ -105,8 +113,16 @@ alloc_string(size_t size)
 rt_data_t *
 alloc_list(size_t size)
 {
-  rt_data_t *ret = malloc(sizeof (rt_list_t) + size * sizeof(rt_data_t *));
+  rt_data_t *ret = alloc_array(size);
   ret->tag = LIST;
+  return ret;
+}
+
+rt_data_t *
+alloc_array(size_t size)
+{
+  rt_data_t *ret = malloc(sizeof (rt_list_t) + size * sizeof(rt_data_t *));
+  ret->tag = ARRAY;
   ret->_list.size = size;
   // ret._list.list is left untouched
   return ret;
@@ -133,6 +149,8 @@ shallow_copy(rt_data_t *src)
     case ENV:			/* Increase reference counter */
       ++src->_env.refs;
       return src;
+    case ARRAY:			/* Shallow copy all elements */
+      return from_array(src->_list.size, src->_list.list);
     case LIST:			/* Shallow copy all elements */
       return from_list(src->_list.size, src->_list.list);
     default:
@@ -156,14 +174,16 @@ deep_copy(const rt_data_t *src)
     case ERR:   return from_err_msg(src->_atom.str);
     case FUNC:  return from_func_ptr(src->_func.fptr);
     case ENV:   return env_clone(&src->_env);
+    case ARRAY:
     case LIST:			/* Copy every element */
       {
-	rt_data_t *tmp = alloc_list(src->_list.size);
+	rt_data_t *tmp = alloc_array(src->_list.size);
 	size_t i;
 	for (i = 0; i < src->_list.size; ++i)
 	  {
 	    tmp->_list.list[i] = deep_copy(src->_list.list[i]);
 	  }
+	tmp->tag = src->tag;
 	return tmp;
       }
     default:
@@ -194,6 +214,7 @@ dealloc(rt_data_t **src)
 	  if (--(*src)->_env.refs > 0) return;
 	  (*src)->_env.dealloc(*src);
 	  break;
+	case ARRAY:
 	case LIST:		/* Deallocate every element */
 	  {
 	    size_t i;

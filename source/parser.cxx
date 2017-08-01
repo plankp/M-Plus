@@ -313,7 +313,7 @@ parse_prefix (parser_info &src)
   if (optional(src, { mp_token_t::Y_ADD, mp_token_t::Y_SUB }, tok))
     {
       return make_unary_expr(from_atom(tok.text.c_str()),
-			     parse_expression(src));
+			     parse_exponent(src));
     }
   return parse_exponent(src);
 }
@@ -532,11 +532,14 @@ parse_primitive (parser_info &src)
   // | IDENT ',' <<params>>
   if (optional(src, { mp_token_t::P_LSQUARE }))
     {
-      if (optional(src, { mp_token_t::P_RSQUARE })) return alloc_list(0);
+      if (optional(src, { mp_token_t::P_RSQUARE })) return alloc_array(0);
       auto datum = parse_argument_list(src);
       
       mp_token_t tok = one_of(src, { mp_token_t::P_RSQUARE });
-      auto tree = alloc_list(0);
+
+      // Do not convert this into a from_array expression:
+      // the content will not be evaluated (which is bad)
+      auto tree = alloc_array(0);
       for (size_t i = datum.size(); i > 0; --i)
 	{
 	  tree = make_binary_expr(from_atom(":"),

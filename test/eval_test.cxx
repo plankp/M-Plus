@@ -5,60 +5,13 @@
 #include "rt_data.h"
 #include "rt_utils.h"
 
-#define PRIM_FUNCS				\
-  DEF_GENERIC(add, +)				\
-  DEF_GENERIC(sub, -)				\
-  DEF_GENERIC(mul, *)				\
-  DEF_GENERIC(div, /)
-
-#define DEF_GENERIC(name, op)						\
-  static								\
-  rt_data_t *								\
-  generic_##name(rt_env_t *env, rt_data_t *lhs, rt_data_t *rhs)		\
-  {									\
-    if (lhs->tag == rhs->tag && lhs->tag == INT)			\
-      { return from_int64(lhs->_int.i op rhs->_int.i); }		\
-    if (lhs->tag == rhs->tag && lhs->tag == FLOAT)			\
-      { return from_int64(lhs->_float.f op rhs->_float.f); }	\
-    return from_err_msg("ILLEGAL DATA TYPE -- " #op);			\
-  }
-
-PRIM_FUNCS
-
-#undef DEF_GENERIC
-
-static
-rt_data_t *
-generic_error(rt_env_t *env, rt_data_t *, rt_data_t *)
-{
-  return from_err_msg("ERROR");
-}
-
 static
 rt_env_t *
 make_prim_env (void)
 {
   rt_env_t *env = new_mp_env();
-#define DEF_GENERIC(name, op)				\
-  do							\
-    {							\
-      rt_data_t *own = from_func_ptr(generic_##name);	\
-      env_define(env, #op, own);			\
-      dealloc(&own);					\
-    }							\
-  while(0);
-
-PRIM_FUNCS;
-DEF_GENERIC(error, error);
-
-#undef DEF_GENERIC
+  init_default_env(env);
   return env;
-}
-
-TEST_CASE("error behaviour", "[err]") {
-  rt_data_t *err = generic_error(nullptr, nullptr, nullptr);
-  REQUIRE(err->tag == ERR);
-  dealloc(&err);
 }
 
 SCENARIO("eval behaviour", "[eval]") {

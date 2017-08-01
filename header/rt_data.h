@@ -25,6 +25,7 @@ extern "C"
   X(ERR)					\
   X(FUNC)					\
   X(ENV)					\
+  X(ARRAY)					\
   X(LIST)
 
 #define X(n) n,
@@ -116,9 +117,13 @@ extern "C"
 
   extern rt_data_t *from_list(size_t size, rt_data_t *ptr[]);
 
+  extern rt_data_t *from_array(size_t size, rt_data_t *ptr[]);
+
   extern rt_data_t *alloc_string(size_t size);
 
   extern rt_data_t *alloc_list(size_t size);
+
+  extern rt_data_t *alloc_array(size_t size);
 
   extern rt_data_t *shallow_copy(rt_data_t *src);
 

@@ -1,7 +1,58 @@
 #include "eval.h"
 
+#define GUARD_DO(name, value, id)				\
+  rt_data_t *name = value;					\
+  if (!name)							\
+    {								\
+      ret = from_err_msg("TYPE IS NULL -- EVAL");		\
+      goto name## _ ##id;					\
+    }								\
+  if (name->tag == ERR)						\
+    {								\
+      ret = name;						\
+      goto name## _ ##id;					\
+    }								\
+      {
+
+#define GUARD_END(name, id)			\
+      dealloc(&name);				\
+    }						\
+      name## _ ##id:
+
+static rt_data_t *intern_eval(rt_env_t *env, rt_data_t *data,
+			      const bool atm_should_dcpy);
+
+static rt_data_t *proc_assignment(rt_env_t *env, rt_data_t *data,
+				  const bool should_def_new);
+
+static
 rt_data_t *
-eval(rt_env_t *env, rt_data_t *data)
+proc_assignment(rt_env_t *env, rt_data_t *data, const bool should_def_new)
+{
+  rt_data_t *ret = NULL;
+  GUARD_DO(rhs, eval(env, data->_list.list[2]), def);
+  if (data->_list.list[1]->tag == ATOM)
+    {
+      if (should_def_new)
+	{ env_define(env, data->_list.list[1]->_atom.str, rhs); }
+      else
+	{ env_mutate(env, data->_list.list[1]->_atom.str, rhs); }
+    }
+  else
+    {
+      /* Swap the lhs and rhs, then deallocate rhs after
+       * swapping. Note: deallocate is guaranteed by the
+       * GUARD_END clause!
+       */
+      rt_data_t *lhs = intern_eval(env, data, false);
+      swap_expr(&lhs, &rhs);
+    }
+  GUARD_END(rhs, def);
+  return ret;
+}
+
+rt_data_t *
+intern_eval(rt_env_t *env, rt_data_t *data, const bool atm_should_dcpy)
 {
   if (!data) return NULL;
   switch (data->tag)
@@ -12,30 +63,16 @@ eval(rt_env_t *env, rt_data_t *data)
     case FUNC:
     case ERR:
     case STR:
+    case ARRAY:
     case ENV:			// Shallow copy
       return shallow_copy(data);
-    case ATOM:			// Deep clone
-      return deep_copy(env_look_up(env, data->_atom.str));
-    case LIST:			// Determine context and then eval
-#define GUARD_DO(name, value, id)				\
-      rt_data_t *name = value;					\
-      if (!name)						\
-	{							\
-	  ret = from_err_msg("TYPE IS NULL -- EVAL");		\
-	  goto name## _ ##id;					\
-	}							\
-      if (name->tag == ERR)					\
-	{							\
-	  ret = name;						\
-	  goto name## _ ##id;					\
-	}							\
+    case ATOM:			// Copy depends on atm_should_dcpy
       {
-
-#define GUARD_END(name, id)			\
-      dealloc(&name);				\
-    }						\
-      name## _ ##id:
-
+	rt_data_t *no_own = env_look_up(env, data->_atom.str);
+	if (atm_should_dcpy) return deep_copy(no_own);
+	return shallow_copy(no_own);
+      }
+    case LIST:			// Determine context and then eval
       /* It is an empty list */
       if (data->_list.size == 0) return shallow_copy(data);
 
@@ -43,7 +80,23 @@ eval(rt_env_t *env, rt_data_t *data)
       if (data->_list.list[0]->tag == ATOM)
 	{
 	  const char *id = data->_list.list[0]->_atom.str;
-	  if (strcmp("do", id) == 0)
+	  if (strcmp("=", id) == 0) /* Define */
+	    {
+	      return proc_assignment(env, data, true);
+	    }
+
+	  if (strcmp("<-", id) == 0) /* Mutate */
+	    {
+	      return proc_assignment(env, data, false);
+	    }
+
+	  if (strcmp("&", id) == 0) /* quote */
+	    {
+	      if (data->_list.size == 0) return alloc_list(0);
+	      return shallow_copy(data->_list.list[1]);
+	    }
+
+	  if (strcmp("and", id) == 0) /* short-circuit and */
 	    {
 	      /* GUARD macros do not work here! */
 	      rt_data_t *ret = NULL;
@@ -52,13 +105,43 @@ eval(rt_env_t *env, rt_data_t *data)
 		{
 		  dealloc(&ret);
 		  ret = eval(env, data->_list.list[i]);
-		  if (!ret) return from_err_msg("TYPE IS NULL -- EVAL");
-		  if (ret->tag == ERR) break;
+		  if (!ret) return from_err_msg("TYPE IS NULL -- and");
+		  if (!expr_is_truthy(ret)) break;
 		}
 	      return ret;
 	    }
 
-	  if (strcmp("cond", id) == 0)
+	  if (strcmp("or", id) == 0) /* short-circuit or */
+	    {
+	      /* GUARD macros do not work here! */
+	      rt_data_t *ret = NULL;
+	      size_t i;
+	      for (i = 1; i < data->_list.size; ++i)
+		{
+		  dealloc(&ret);
+		  ret = eval(env, data->_list.list[i]);
+		  if (ret && (ret->tag == ERR || expr_is_truthy(ret))) break;
+		}
+	      if (!ret) return from_err_msg("TYPE IS NULL -- or");
+	      return ret;
+	    }
+
+	  if (strcmp("do", id) == 0) /* Do-end block */
+	    {
+	      /* GUARD macros do not work here! */
+	      rt_data_t *ret = NULL;
+	      size_t i;
+	      for (i = 1; i < data->_list.size; ++i)
+		{
+		  dealloc(&ret);
+		  ret = eval(env, data->_list.list[i]);
+		  if (ret && ret->tag == ERR) break;
+		}
+	      if (!ret) return from_err_msg("TYPE IS NULL -- do");
+	      return ret;
+	    }
+
+	  if (strcmp("cond", id) == 0) /* If-else block */
 	    {
 	      size_t i;
 	      for (i = 1; i < data->_list.size; ++i)
@@ -75,7 +158,7 @@ eval(rt_env_t *env, rt_data_t *data)
 		    }
 
 		  rt_data_t *pred = eval(env, pnode->_list.list[0]);
-		  if (!pred) return from_err_msg("TYPE IS NULL -- EVAL");
+		  if (!pred) return from_err_msg("TYPE IS NULL -- cond");
 		  if (pred->tag == ERR) return pred;
 		  if (expr_is_truthy(pred))
 		    {
@@ -83,7 +166,7 @@ eval(rt_env_t *env, rt_data_t *data)
 		      return eval(env, pnode->_list.list[1]);
 		    }
 		}
-	      return from_err_msg("NOT ALL CASES WERE HANDLED -- COND");
+	      return from_err_msg("NOT ALL CASES WERE HANDLED -- cond");
 	    }
 	}
 
@@ -95,17 +178,15 @@ eval(rt_env_t *env, rt_data_t *data)
 	    rt_data_t *ret = NULL;
 	    GUARD_DO(base, eval(env, data->_list.list[0]), g1);
 
-	    rt_data_t *env_cpy = shallow_copy((rt_data_t*) env);
 	    switch (base->tag) // base is guaranteed to not be ERR
 	      {
 	      case FUNC:
-		ret = base->_func.fptr(&env_cpy->_env, NULL, NULL);
+		ret = base->_func.fptr(env, NULL, NULL);
 		break;
 	      default:
 		ret = from_err_msg("TYPE IS NOT APPLIABLE -- EVAL");
 		break;
 	      }
-	    dealloc(&env_cpy);
 	    GUARD_END(base, g1);
 	    return ret;
 	  }
@@ -115,17 +196,15 @@ eval(rt_env_t *env, rt_data_t *data)
 	    GUARD_DO(base, eval(env, data->_list.list[0]), g2);
 	    GUARD_DO(p1, eval(env, data->_list.list[1]), g2);
 
-	    rt_data_t *env_cpy = shallow_copy((rt_data_t*) env);
 	    switch (base->tag) // base is guaranteed to not be ERR
 	      {
 	      case FUNC:
-		ret = base->_func.fptr(&env_cpy->_env, p1, NULL);
+		ret = base->_func.fptr(env, p1, NULL);
 		break;
 	      default:
 		ret = from_err_msg("TYPE IS NOT APPLIABLE -- EVAL");
 		break;
 	      }
-	    dealloc(&env_cpy);
 	    GUARD_END(p1, g2);
 	    GUARD_END(base, g2);
 	    return ret;
@@ -137,17 +216,15 @@ eval(rt_env_t *env, rt_data_t *data)
 	    GUARD_DO(p1, eval(env, data->_list.list[1]), g3);
 	    GUARD_DO(p2, eval(env, data->_list.list[2]), g3);
 
-	    rt_data_t *env_cpy = shallow_copy((rt_data_t*) env);
 	    switch (base->tag) // base is guaranteed to not be ERR
 	      {
 	      case FUNC:
-		ret = base->_func.fptr(&env_cpy->_env, p1, p2);
+		ret = base->_func.fptr(env, p1, p2);
 		break;
 	      default:
 		ret = from_err_msg("TYPE IS NOT APPLIABLE -- EVAL");
 		break;
 	      }
-	    dealloc(&env_cpy);
 	    GUARD_END(p2, g3);
 	    GUARD_END(p1, g3);
 	    GUARD_END(base, g3);
@@ -156,9 +233,17 @@ eval(rt_env_t *env, rt_data_t *data)
 	default:
 	  return from_err_msg("CANNOT INFER LIST CONTEXT -- EVAL");
 	}
-#undef GUARD_END
-#undef GUARD_DO
     default:
       return from_err_msg("UNRECOGNIZED DATA TAG -- EVAL");
     }
 }
+
+rt_data_t *
+eval(rt_env_t *env, rt_data_t *data)
+{
+  // Deep copy should be performed upon seeing an atom
+  return intern_eval(env, data, true);
+}
+
+#undef GUARD_END
+#undef GUARD_DO
