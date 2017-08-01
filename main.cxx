@@ -1,3 +1,5 @@
+#include "eval.h"
+#include "mp_env.h"
 #include "lexer.hxx"
 #include "parser.hxx"
 
@@ -28,6 +30,13 @@ main (int argc, char **argv)
       auto tree = parse(info);
       // debug print tree here!
       auto str = expr_to_str(tree);
+      std::cout << str << std::endl;
+      free(str);
+
+      std::cout << "Attempt to execute code" << std::endl;
+      auto env = new_mp_env();
+      auto ret = eval(env, tree);
+      str = expr_to_str(ret);
       std::cout << str << std::endl;
       free(str);
       dealloc(&tree);

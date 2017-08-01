@@ -29,19 +29,6 @@ extern "C"
 
   rt_env_t *new_mp_env(void);
 
-  inline
-  void
-  print_all_buckets(void *ptr)
-  {
-    mp_env_t *self = (mp_env_t *) ptr;
-    size_t i;
-    for (i = 0; i < BUCKET_SIZE; ++i)
-      {
-	printf("Bucket[%zu]: %s\n", i, self->bucket[i] ? self->bucket[i]->key : "(null)");
-      }
-    printf("\n");
-  }
-
 #ifdef __cplusplus
 };
 #endif
