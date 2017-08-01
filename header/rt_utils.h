@@ -7,6 +7,10 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -23,6 +27,8 @@ extern "C"
   // user must dealloc data themselves
 
   extern char *expr_to_str(rt_data_t *data);
+
+  extern bool expr_is_truthy(rt_data_t *data);
 
 #ifdef __cplusplus
 };

@@ -2,6 +2,7 @@
 #define _C_MP_EVAL_H__
 
 #include "rt_data.h"
+#include "rt_utils.h"
 
 #ifdef __cplusplus
 extern "C"

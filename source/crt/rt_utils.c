@@ -130,3 +130,24 @@ expr_to_str(rt_data_t *data)
     }
   return str;
 }
+
+bool
+expr_is_truthy (rt_data_t *data)
+{
+  if (!data) return false;
+  switch (data->tag)
+    {
+    case CHAR:  return data->_char.c != 0;
+    case INT:   return data->_int.i != 0;
+    case FLOAT: return data->_float.f != 0;
+    case ATOM:  return data->_atom.size != 0;
+    case STR:   return !(data->_atom.size == 0
+			 || strcmp("@", data->_atom.str) == 0
+			 || strcmp("@\"\"", data->_atom.str) == 0);
+    case ERR:   return false;
+    case FUNC:  return true;
+    case ENV:   return true;
+    case LIST:  return data->_list.size != 0;
+    default:    return true;
+    }
+}

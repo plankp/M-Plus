@@ -462,9 +462,8 @@ parse_if_expr (parser_info &src)
 	  mp_token_t tok = one_of(src, { mp_token_t::K_ELSE, mp_token_t::K_IF });
 	  if (tok.type == mp_token_t::K_IF)
 	    {
-	      tree.push_back(make_binary_expr(from_atom(tok.text.c_str()),
-					      parse_expression(src),
-					      expr));
+	      tree.push_back(make_unary_expr(parse_expression(src),
+					     expr));
 	      if (optional(src, { mp_token_t::Y_COMMA })) continue;
 	      break;
 	    }
@@ -560,7 +559,7 @@ parse_primitive (parser_info &src)
 	   */
 	  mp_token_t op = one_of(src, impl_produce);
 	  return make_binary_expr(from_atom(op.text.c_str()),
-				  from_atom(""),
+				  alloc_list(0),
 				  parse_expression(src));
 	}
       // Assume it is a function
