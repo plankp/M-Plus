@@ -2,6 +2,7 @@
 #define _C_MP_I_RT_UDT_H__
 
 #include "rt_tags.h"
+#include "i_rt_env.h"
 
 #include <stddef.h>
 
@@ -33,6 +34,21 @@ extern "C"
 
     /* Test if object is truthy. */
     bool (*to_bool)(const void *self);
+
+    /* Test if object is equals. obj is not guaranteed to have the same
+     * type as self.
+     *
+     * The runtime will not dispatch this method if obj is NULL, ERR or 
+     * has the same memory location.
+     *
+     * This method *must* have the property of (x == y) == (y == x) as
+     * INT(1) == UDT() will result in a dispatch to the UDT's equals
+     * method.
+     *
+     * You are encouraged to provide implementation as the default only
+     * checks if they have the same memory location.
+     */
+    bool (*equals)(const void *self, const rt_data_t *obj);
 
     /* Dispatch method: parameters are based on context
      *   - e      => Always the environment the dispatch is done under

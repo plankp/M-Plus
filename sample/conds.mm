@@ -9,5 +9,9 @@ a = {
   @"case 3"   if @,     # Also shouldn't happen
   @"case 4"   else      # should happen
 };
-a <- [a, { @"case 5" if 1 }, { @"case 6" if @A }];
+a <- [
+  a,
+  { @"case 5" if 1 == 2 or &1 == 1 },
+  { @"case 6" if @A == @"A" and &[] == [] }
+];
 a                       # should be [@"case 4", @"case 5", @"case 6"]

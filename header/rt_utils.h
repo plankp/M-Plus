@@ -32,6 +32,8 @@ extern "C"
 
   extern bool expr_is_truthy(rt_data_t *data);
 
+  extern bool expr_eqls(rt_data_t *lhs, rt_data_t *rhs);
+
   // *lhs and *rhs are swapped
 
   extern void swap_expr(rt_data_t **lhs, rt_data_t **rhs);

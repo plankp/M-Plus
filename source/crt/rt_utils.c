@@ -190,12 +190,127 @@ expr_is_truthy (rt_data_t *data)
     }
 }
 
+bool
+expr_eqls(rt_data_t *lhs, rt_data_t *rhs)
+{
+  if (lhs == rhs) return true;
+  if (!lhs || !rhs) return false; /* NULL can only equal to NULL */
+  if (lhs->tag == ERR || rhs->tag == ERR) return false; /* ERR != ERR */
+
+  if (lhs->tag == UDT)
+    {
+      if (lhs->_udt.equals) return lhs->_udt.equals(lhs, rhs);
+      /* Default tests if objects have same mem location */
+      return false;
+    }
+
+  if (rhs->tag == UDT)
+    {
+      if (rhs->_udt.equals) return rhs->_udt.equals(rhs, lhs);
+      /* Default tests if objects have same mem location */
+      return false;
+    }
+
+  /* Test for primitive types (not ERR, UDT */
+  switch (lhs->tag)
+    {
+    case CHAR:
+      switch (rhs->tag)
+	{
+	case CHAR:  return lhs->_char.c == rhs->_char.c;
+	case INT:   return lhs->_char.c == rhs->_int.i;
+	case FLOAT: return lhs->_char.c == rhs->_float.f;
+	default:    return false;
+	}
+    case INT:
+      switch (rhs->tag)
+	{
+	case CHAR:  return lhs->_int.i == rhs->_char.c;
+	case INT:   return lhs->_int.i == rhs->_int.i;
+	case FLOAT: return lhs->_int.i == rhs->_float.f;
+	default:    return false;
+	}
+    case FLOAT:
+      switch (rhs->tag)
+	{
+	case CHAR:  return lhs->_float.f == rhs->_char.c;
+	case INT:   return lhs->_float.f == rhs->_int.i;
+	case FLOAT: return lhs->_float.f == rhs->_float.f;
+	default:    return false;
+	}
+    case FUNC:
+      if (rhs->tag == FUNC) return lhs->_func.fptr == rhs->_func.fptr;
+      return false;
+    case ENV:
+      return false;
+    case ATOM:
+      if (rhs->tag == ATOM)
+	{
+	  if (lhs->_atom.str == rhs->_atom.str) return true;
+	  if (lhs->_atom.size == rhs->_atom.size)
+	    {
+	      return memcmp(lhs->_atom.str, rhs->_atom.str,
+			    lhs->_atom.size) == 0;
+	    }
+	}
+      return false;
+    case STR:
+      if (rhs->tag == STR)
+	{
+	  if (lhs->_atom.str == rhs->_atom.str) return true;
+	  char *lhss = expr_to_str(lhs);
+	  char *rhss = expr_to_str(rhs);
+	  const bool ret = strcmp(lhss, rhss) == 0;
+	  free(lhss);
+	  free(rhss);
+	  return ret;
+	}
+      return false;
+    case ARRAY:
+    case LIST:
+      if (rhs->tag == ARRAY || rhs->tag == LIST)
+	{
+	  if (lhs->_list.list == rhs->_list.list) return true;
+	  if (lhs->_list.size == rhs->_list.size)
+	    {
+	      /* abort as soon as a mismatch is found */
+	      size_t i;
+	      for (i = 0; i < lhs->_list.size; ++i)
+		{
+		  if (!expr_eqls(lhs->_list.list[i], rhs->_list.list[i]))
+		    {
+		      return false;
+		    }
+		}
+	      return true;
+	    }
+	}
+      return false;
+    default:
+      return false;
+    }
+}
+
 void
 swap_expr(rt_data_t **lhs, rt_data_t **rhs)
 {
   rt_data_t *tmp = *lhs;
   *lhs = *rhs;
   *rhs = tmp;
+}
+
+static
+rt_data_t *
+impl_eqls(rt_env_t *_env, rt_data_t *a, rt_data_t *b)
+{
+  return from_int64(expr_eqls(a, b));
+}
+
+static
+rt_data_t *
+impl_neqls(rt_env_t *_env, rt_data_t *a, rt_data_t *b)
+{
+  return from_int64(!expr_eqls(a, b));
 }
 
 static
@@ -560,6 +675,8 @@ init_default_env(rt_env_t *env)
   DEFINE_VAL(mod, from_func_ptr(impl_mod));
   DEFINE_VAL(^, from_func_ptr(impl_pow));
   DEFINE_VAL(%, from_func_ptr(impl_percent));
+  DEFINE_VAL(==, from_func_ptr(impl_eqls));
+  DEFINE_VAL(/=, from_func_ptr(impl_neqls));
 
 #undef DEFINE_VAL
 }
