@@ -52,7 +52,7 @@ proc_assignment(rt_env_t *env, rt_data_t *data, const bool should_def_new)
 }
 
 rt_data_t *
-intern_eval(rt_env_t *env, rt_data_t *data, const bool atm_should_dcpy)
+intern_eval(rt_env_t *env, rt_data_t *data, const bool atm_should_cpy)
 {
   if (!data) return NULL;
   switch (data->tag)
@@ -64,13 +64,14 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool atm_should_dcpy)
     case ERR:
     case STR:
     case ARRAY:
+    case UDT:
     case ENV:			// Shallow copy
       return shallow_copy(data);
-    case ATOM:			// Copy depends on atm_should_dcpy
+    case ATOM:			// Copy depends on atm_should_cpy
       {
 	rt_data_t *no_own = env_look_up(env, data->_atom.str);
-	if (atm_should_dcpy) return deep_copy(no_own);
-	return shallow_copy(no_own);
+	if (atm_should_cpy) return deep_copy(no_own);
+	return no_own;
       }
     case LIST:			// Determine context and then eval
       /* It is an empty list */

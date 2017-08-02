@@ -51,14 +51,7 @@ extern "C"
     bool (*dealloc)(void *self);
   } rt_udt_t;
 
-  inline
-  rt_udt_t
-  create_base_udt(const char *type_name)
-  {
-    /* Initialize all other fields as NULL */
-    return (rt_udt_t)
-      { .tag = UDT, .type = type_name };
-  }
+  extern rt_udt_t create_base_udt(const char *type_name);
 
 #ifdef __cplusplus
 };
