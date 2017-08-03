@@ -52,7 +52,7 @@ proc_assignment(rt_env_t *env, rt_data_t *data, const bool should_def_new)
 }
 
 rt_data_t *
-intern_eval(rt_env_t *env, rt_data_t *data, const bool atm_should_cpy)
+intern_eval(rt_env_t *env, rt_data_t *data, const bool should_cpy)
 {
   if (!data) return NULL;
   switch (data->tag)
@@ -67,14 +67,14 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool atm_should_cpy)
     case UDT:
     case ENV:			// Shallow copy
       return shallow_copy(data);
-    case ATOM:			// Copy depends on atm_should_cpy
+    case ATOM:			// Copy depends on should_cpy
       {
 	rt_data_t *no_own = env_look_up(env, data->_atom.str);
 
-	/* Returns regardless of atm_should_cpy if it is an error */
+	/* Returns regardless of should_cpy if it is an error */
 	if (no_own->tag == ERR) return no_own;
 
-	if (atm_should_cpy) return deep_copy(no_own);
+	if (should_cpy) return deep_copy(no_own);
 	return no_own;
       }
     case LIST:			// Determine context and then eval
@@ -197,11 +197,9 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool atm_should_cpy)
 		  rt_data_t *pred = eval(env, pnode->_list.list[0]);
 		  if (!pred) return from_err_msg("TYPE IS NULL -- cond");
 		  if (pred->tag == ERR) return pred;
-		  if (expr_is_truthy(pred))
-		    {
-		      dealloc(&pred);
-		      return eval(env, pnode->_list.list[1]);
-		    }
+		  const bool pred_rst = expr_is_truthy(pred);
+		  dealloc(&pred);
+		  if (pred_rst) return eval(env, pnode->_list.list[1]);
 		}
 	      return from_err_msg("NOT ALL CASES WERE HANDLED -- cond");
 	    }

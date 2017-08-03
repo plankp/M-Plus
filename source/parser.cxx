@@ -484,11 +484,6 @@ parse_if_expr (parser_info &src)
   return parse_primitive(src);
 }
 
-static const std::vector<mp_token_t::tok_type> impl_produce
-{
-  mp_token_t::Y_YIELD, mp_token_t::Y_MACRO
-};
-
 static
 long long
 conv_ll(const std::string& text)
@@ -530,6 +525,8 @@ parse_primitive (parser_info &src)
   // <<params>>
   // = IDENT
   // | IDENT ',' <<params>>
+  #define impl_produce { mp_token_t::Y_YIELD, mp_token_t::Y_MACRO }
+
   if (optional(src, { mp_token_t::P_LSQUARE }))
     {
       if (optional(src, { mp_token_t::P_RSQUARE })) return alloc_array(0);
@@ -623,4 +620,6 @@ parse_primitive (parser_info &src)
       return from_double(std::stod(tok.text));
     }
   return from_string(one_of(src, { mp_token_t::L_ATOM }).text.c_str());
+  
+  #undef impl_produce
 }

@@ -38,7 +38,7 @@ extern "C"
     double f;
   } rt_float_t;
   
-  typedef struct rt_atom_t	/* Tag must be either ATOM or ERR */
+  typedef struct rt_atom_t	/* Tag must be either ATOM, STR, or ERR */
   {
     rt_tag_t tag;
     size_t refs;

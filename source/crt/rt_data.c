@@ -16,7 +16,7 @@ rt_data_t *
 from_int64(int64_t i64)
 {
   // Should cache value -128 to 128
-  rt_data_t *ret = malloc(sizeof(rt_int_t));
+  rt_data_t *ret = calloc(1, sizeof(rt_int_t));
   ret->tag = INT;
   ret->_int.i = i64;
   return ret;
@@ -103,12 +103,12 @@ rt_data_t *
 alloc_string(size_t size)
 {
   // allocates size + 1 (null-byte)
-  rt_data_t *ret = malloc(sizeof (rt_atom_t));
+  rt_data_t *ret = calloc(1, sizeof (rt_atom_t));
   ret->tag = STR;
   ret->_atom.refs = 1;
   ret->_atom.size = size;
   ret->_atom.ffree = true;	   /* This atom is dynamically allocated */
-  ret->_atom.str = calloc(sizeof(char), size + 1);
+  ret->_atom.str = malloc(size * sizeof(char) + 1);
   return ret;
 }
 
@@ -123,7 +123,7 @@ alloc_list(size_t size)
 rt_data_t *
 alloc_array(size_t size)
 {
-  rt_data_t *ret = malloc(sizeof (rt_list_t));
+  rt_data_t *ret = calloc(1, sizeof (rt_list_t));
   ret->tag = ARRAY;
   ret->_list.refs = 1;
   ret->_list.size = size;
