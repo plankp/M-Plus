@@ -7,7 +7,7 @@ A programming language that took a lot from [NtShell](https://github.com/plankp/
 ## To build M+
 
 You need:
-*  CMake >= 2.8.12
+*  CMake >= 3.0.0
 *  C99 supporting compiler
 *  C++11 supporting compiler
 
