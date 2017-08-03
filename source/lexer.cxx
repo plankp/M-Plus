@@ -13,9 +13,7 @@ istream_wrapper::istream_wrapper(istream_wrapper &&mref)
 istream_wrapper &
 istream_wrapper::operator=(istream_wrapper &&obj)
 {
-  using std::swap;
-
-  swap(*this, obj);
+  *this = istream_wrapper(std::move(obj));
   return *this;
 }
 
@@ -33,7 +31,7 @@ istream_wrapper::get(void)
     {
     case '\n': ++line_num; col_num = 0; break;
     case '\r': col_num = 0; break;
-    case EOF: break;
+    case std::char_traits<char>::eof(): break;
     default: ++col_num; break;
     }
   return ch;
@@ -212,7 +210,7 @@ next_token (istream_wrapper &src)
 		    src.get_line_num(), src.get_col_num(), "<" };
 	      }
 	  }
-	case EOF:
+	case std::char_traits<char>::eof():
 	  return create_eof_token(src);
 	case '@':
 	  src.unget(c);
@@ -251,7 +249,7 @@ next_opt_ident (istream_wrapper &src, std::stringstream &buf)
   else src.unget(ch);
 }
 
-static const std::map<std::string, mp_token_t::tok_type> KWORDS
+static const std::map<std::string, mp_token_t::tok_type> KWORDS =
 {
   { "mod", mp_token_t::K_MOD },
   { "if", mp_token_t::K_IF },
@@ -268,7 +266,7 @@ next_symbol (istream_wrapper &src)
 {
   std::stringstream stream;
   int ch = src.get();
-  if (ch == EOF) return create_eof_token(src);
+  if (ch == std::char_traits<char>::eof()) return create_eof_token(src);
   if (is_ident(ch))
     {
       stream << static_cast<char>(ch);
@@ -286,7 +284,7 @@ void
 next_zero_number (istream_wrapper &src, std::stringstream &sstr)
 {
   int ch = src.get();
-  bool (*pred)(int) = nullptr;
+  bool (*pred)(int) = NULL;
   switch (ch)
     {
     case 'b':
@@ -343,7 +341,7 @@ mp_token_t
 next_number (istream_wrapper &src)
 {
   int ch = src.get();
-  if (ch == EOF) return create_eof_token(src);
+  if (ch == std::char_traits<char>::eof()) return create_eof_token(src);
   if (ch == '0')
     {
       std::stringstream sstr;
@@ -367,7 +365,7 @@ mp_token_t
 next_atom (istream_wrapper &src)
 {
   int ch = src.get();
-  if (ch == EOF) return create_eof_token(src);
+  if (ch == std::char_traits<char>::eof()) return create_eof_token(src);
   if (ch == '@')
     {
       std::stringstream sstr;

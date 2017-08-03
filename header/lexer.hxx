@@ -43,7 +43,7 @@ inline
 bool
 is_comment_end (int ch)
 {
-  return ch == EOF || ch == '\n' || ch == '\r';
+  return ch == std::char_traits<char>::eof() || ch == '\n' || ch == '\r';
 }
 
 inline
