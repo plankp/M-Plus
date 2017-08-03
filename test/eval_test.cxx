@@ -9,7 +9,7 @@ static
 rt_env_t *
 make_prim_env (void)
 {
-  rt_env_t *env = new_mp_env();
+  rt_env_t *env = new_mp_env(nullptr);
   init_default_env(env);
   return env;
 }

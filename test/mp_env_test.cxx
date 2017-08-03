@@ -7,7 +7,7 @@ SCENARIO("MP Environment behaviour", "[mp_env_t]") {
   GIVEN("an empty environment") {
     // This is static, otherwise it gets re-initialized
     // for every WHEN clause
-    static rt_env_t *env = new_mp_env();
+    static rt_env_t *env = new_mp_env(nullptr);
 
     REQUIRE(env->tag == ENV);
 

@@ -34,15 +34,15 @@ main (int argc, char **argv)
       free(str);
 
       std::cout << "Attempt to execute code" << std::endl;
-      auto env = new_mp_env();
+      auto env = new_mp_env(nullptr);
       init_default_env(env);
 
       auto ret = eval(env, tree);
       str = expr_to_str(ret);
       std::cout << str << std::endl;
       free(str);
-	  auto denv = reinterpret_cast<rt_data_t *>(env);
-	  dealloc(&denv);
+      auto denv = reinterpret_cast<rt_data_t *>(env);
+      dealloc(&denv);
       dealloc(&tree);
     }
   catch (std::exception &err)

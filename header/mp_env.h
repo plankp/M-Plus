@@ -1,6 +1,7 @@
 #ifndef _C_MP_MP_ENV_H__
 #define _C_MP_MP_ENV_H__
 
+#include "utils.h"
 #include "rt_data.h"
 
 #include <string.h>
@@ -16,7 +17,7 @@ extern "C"
 
   struct mp_env_pair
   {
-    const char *key;
+    char *key;
     rt_data_t *value;
     struct mp_env_pair *next;
   };
@@ -24,10 +25,13 @@ extern "C"
   typedef struct mp_env_t
   {
     rt_env_t base;		/* Inherit */
+    rt_env_t *outer;		/* Outer scope */
     struct mp_env_pair *bucket[BUCKET_SIZE];
   } mp_env_t;
 
-  rt_env_t *new_mp_env(void);
+  /* Ownership of (outer) is transfered from the caller */
+
+  rt_env_t *new_mp_env(rt_env_t *outer);
 
 #ifdef __cplusplus
 };

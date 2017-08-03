@@ -3,6 +3,7 @@
 
 #include "rt_data.h"
 #include "rt_utils.h"
+#include "clos_func.h"
 
 #ifdef __cplusplus
 extern "C"

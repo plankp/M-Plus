@@ -21,9 +21,10 @@ djb2_hash(const char *key)
 }
 
 rt_env_t *
-new_mp_env(void)
+new_mp_env(rt_env_t *outer)
 {
   mp_env_t *ret = calloc(sizeof (mp_env_t), 1);
+
   ret->base = create_base_env();
   ret->base.look_up = mp_env_look_up;
   ret->base.mutate = mp_env_mutate;
@@ -31,6 +32,9 @@ new_mp_env(void)
   ret->base.remove = mp_env_remove;
   ret->base.clone = mp_env_clone;
   ret->base.dealloc = mp_env_dealloc;
+
+  ret->outer = outer;
+
   return (rt_env_t*) ret;
 }
 
@@ -45,7 +49,11 @@ mp_env_look_up (void *_self, const char *id)
       if (strcmp(p->key, id) == 0) return p->value;
       p = p->next;
     }
-  return NULL;
+
+  /* Perform lookup in outer scope */
+  if (self->outer) return env_look_up(self->outer, id);
+  /* Throw an error if not found */
+  return from_err_msg("VARIABLE IS NOT DECLARED -- ENV-LOOKUP");
 }
 
 void
@@ -65,7 +73,12 @@ mp_env_mutate (void *_self, const char *id, rt_data_t *val)
 	}
       cell = &(*cell)->next;
     }
-  /* Since variable does not exist, nothing happens here */
+
+  /* Variable does not exist in this scope,
+   * try mutating the parent scope (biggest
+   * difference between define and mutate).
+   */
+  if (self->outer) env_mutate(self->outer, id, val);
 }
 
 void
@@ -88,7 +101,7 @@ mp_env_define (void *_self, const char *id, rt_data_t *val)
 
   /* Allocate cell in place */
   *cell = calloc(sizeof (struct mp_env_pair), 1);
-  (*cell)->key = id;
+  (*cell)->key = clone_str(id);
   (*cell)->value = shallow_copy(val);
   (*cell)->next = NULL;
 }
@@ -110,14 +123,16 @@ mp_env_remove (void *_self, const char *id)
 	}
       p = &(*p)->next;
     }
+
+  /* do not remove outer scope! */
 }
 
 rt_data_t *
 mp_env_clone (const void *_self)
 {
-  /* This is a deep clone */
+  /* Deep copy current scope, shallow copy outer scope */
   const mp_env_t *self = _self;
-  rt_env_t *ret = new_mp_env();
+  rt_env_t *ret = new_mp_env(&shallow_copy((rt_data_t *) self->outer)->_env);
   size_t i;
   for (i = 0; i < BUCKET_SIZE; ++i)
     {
@@ -142,9 +157,12 @@ mp_env_dealloc (void *_self)
       while (p)
 	{
 	  dealloc(&p->value);
+	  free(p->key);
 	  struct mp_env_pair *next = p->next;
 	  free(p);
 	  p = next;
 	}
     }
+  rt_data_t *dr = (rt_data_t *) self->outer;
+  dealloc(&dr);
 }

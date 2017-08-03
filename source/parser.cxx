@@ -552,14 +552,6 @@ parse_primitive (parser_info &src)
     {
       if (optional(src, { mp_token_t::P_RPAREN }))
 	{
-	  /*
-	   * To the evaluator, an <ident> being sent the <<produce>>
-	   * operator construct a function (or macro). To the runtime,
-	   * if the parameter is an empty string, it is a function taking
-	   * no parameters.
-	   *
-	   * We create an <ident> with <tok.text> of <"">
-	   */
 	  mp_token_t op = one_of(src, impl_produce);
 	  return make_binary_expr(from_atom(op.text.c_str()),
 				  alloc_list(0),
@@ -572,7 +564,7 @@ parse_primitive (parser_info &src)
 	  if (optional(src, { mp_token_t::Y_COMMA }))
 	    {
 	      // Has to be a function in form of (a, b) -> <<expr>>
-	      // => a -> (b -> <<expr>>)
+	      // => (-> (a b) <<expr>>)
 	      std::vector<mp_token_t> ps;
 	      ps.push_back(p);
 	      do ps.push_back(one_of(src, { mp_token_t::L_IDENT }));
@@ -581,13 +573,12 @@ parse_primitive (parser_info &src)
 	      mp_token_t op = one_of(src, impl_produce);
 
 	      auto tree = parse_expression(src);
-	      for (size_t i = ps.size(); i > 0; --i)
+	      auto params = alloc_list(ps.size());
+	      for (size_t i = 0; i < ps.size(); ++i)
 		{
-		  tree = make_binary_expr(from_atom(op.text.c_str()),
-					  from_atom(ps[i - 1].text.c_str()),
-					  tree);
+		  params->_list.list[i] = from_atom(ps[i].text.c_str());
 		}
-	      return tree;
+	      return make_binary_expr(from_atom(op.text.c_str()), params, tree);
 	    }
 	  if (optional(src, { mp_token_t::P_RPAREN }))
 	    {
@@ -596,7 +587,7 @@ parse_primitive (parser_info &src)
 		{
 		  // Has to be a function in form of (a) -> <<expr>>
 		  return make_binary_expr(from_atom(op.text.c_str()),
-					  from_atom(p.text.c_str()),
+					  make_nullary_expr(from_atom(p.text.c_str())),
 					  parse_expression(src));
 		}
 	      // Its an expression ( x )
@@ -618,7 +609,7 @@ parse_primitive (parser_info &src)
       if (optional(src, impl_produce, op))
 	{
 	  return make_binary_expr(from_atom(op.text.c_str()),
-				  from_atom(tok.text.c_str()),
+				  make_nullary_expr(from_atom(tok.text.c_str())),
 				  parse_expression(src));
 	}
       return from_atom(tok.text.c_str());

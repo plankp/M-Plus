@@ -18,7 +18,7 @@ extern "C"
   typedef struct rt_udt_t	/* Inherit from this interface */
   {
     /* Always UDT */
-    const rt_tag_t tag;
+    rt_tag_t tag;
 
     /* Preferred type name */
     const char *type;
@@ -59,7 +59,7 @@ extern "C"
      * [1]: A function call with no parameters
      * [2]: A function call with one parameter
      */
-    rt_data_t *(*apply)(rt_env_t *e, rt_data_t *p);
+    rt_data_t *(*apply)(void *self, rt_env_t *e, rt_data_t *p);
 
     /* Destructor. If returns true, the block itself will be freed
      * by the runtime (or should be freed by its enclosing object).

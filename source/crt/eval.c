@@ -97,6 +97,38 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool atm_should_cpy)
 	      return shallow_copy(data->_list.list[1]);
 	    }
 
+	  if (strcmp("->", id) == 0)  /* lambda */
+	    {
+	      if (data->_list.list[1]->tag == LIST)
+		{
+#define CPY_ENV(m) (&shallow_copy((rt_data_t *)m)->_env)
+		  rt_env_t *env_cpy = CPY_ENV(env);
+		  rt_data_t *expr_body = shallow_copy(data->_list.list[2]);
+		  rt_list_t *params = &data->_list.list[1]->_list;
+		  if (params->size == 0)
+		    {
+		      return (rt_data_t *)
+			make_clos_func(new_mp_env(env_cpy), NULL, expr_body);
+		    }
+
+		  size_t i;
+		  for (i = params->size; i > 0; --i)
+		    {
+		      expr_body = (rt_data_t *)
+			make_clos_func(env_cpy,
+				       params->list[i - 1]->_atom.str,
+				       expr_body);
+		      env_cpy = CPY_ENV(env_cpy);
+		    }
+		  /* Deallocate that extra-copied env_cpy */
+		  rt_data_t *dr = (rt_data_t *) env_cpy;
+		  dealloc(&dr);
+		  return expr_body;
+#undef CPY_ENV
+		}
+	      return from_err_msg("EXPECT LIST FOR PARAMETERS -- ->");
+	    }
+
 	  if (strcmp("and", id) == 0) /* short-circuit and */
 	    {
 	      /* GUARD macros do not work here! */
@@ -185,7 +217,7 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool atm_should_cpy)
 		ret = base->_func.fptr(env, NULL, NULL);
 		break;
 	      case UDT:
-		ret = base->_udt.apply(env, NULL);
+		ret = base->_udt.apply(base, env, NULL);
 		break;
 	      default:
 		ret = from_err_msg("TYPE IS NOT APPLIABLE -- APPLY");
@@ -206,7 +238,7 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool atm_should_cpy)
 		ret = base->_func.fptr(env, p1, NULL);
 		break;
 	      case UDT:
-		ret = base->_udt.apply(env, p1);
+		ret = base->_udt.apply(base, env, p1);
 		break;
 	      default:
 		ret = from_err_msg("TYPE IS NOT APPLIABLE -- APPLY");
