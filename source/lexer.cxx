@@ -31,7 +31,7 @@ istream_wrapper::get(void)
     {
     case '\n': ++line_num; col_num = 0; break;
     case '\r': col_num = 0; break;
-    case std::char_traits<char>::eof(): break;
+    case EOF: break;
     default: ++col_num; break;
     }
   return ch;
@@ -210,7 +210,7 @@ next_token (istream_wrapper &src)
 		    src.get_line_num(), src.get_col_num(), "<" };
 	      }
 	  }
-	case std::char_traits<char>::eof():
+	case EOF:
 	  return create_eof_token(src);
 	case '@':
 	  src.unget(c);
@@ -249,8 +249,7 @@ next_opt_ident (istream_wrapper &src, std::stringstream &buf)
   else src.unget(ch);
 }
 
-static const std::map<std::string, mp_token_t::tok_type> KWORDS =
-{
+static std::map<std::string, mp_token_t::tok_type> KWORDS{
   { "mod", mp_token_t::K_MOD },
   { "if", mp_token_t::K_IF },
   { "else", mp_token_t::K_ELSE },
@@ -266,7 +265,7 @@ next_symbol (istream_wrapper &src)
 {
   std::stringstream stream;
   int ch = src.get();
-  if (ch == std::char_traits<char>::eof()) return create_eof_token(src);
+  if (ch == EOF) return create_eof_token(src);
   if (is_ident(ch))
     {
       stream << static_cast<char>(ch);
@@ -341,7 +340,7 @@ mp_token_t
 next_number (istream_wrapper &src)
 {
   int ch = src.get();
-  if (ch == std::char_traits<char>::eof()) return create_eof_token(src);
+  if (ch == EOF) return create_eof_token(src);
   if (ch == '0')
     {
       std::stringstream sstr;
@@ -365,7 +364,7 @@ mp_token_t
 next_atom (istream_wrapper &src)
 {
   int ch = src.get();
-  if (ch == std::char_traits<char>::eof()) return create_eof_token(src);
+  if (ch == EOF) return create_eof_token(src);
   if (ch == '@')
     {
       std::stringstream sstr;

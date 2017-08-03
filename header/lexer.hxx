@@ -4,10 +4,11 @@
 #include "token.hxx"
 
 #include <map>
+#include <cstdio>
 #include <string>
 #include <istream>
 #include <sstream>
-#include <algorithm>
+#include <utility>
 
 class istream_wrapper
 {
@@ -43,7 +44,7 @@ inline
 bool
 is_comment_end (int ch)
 {
-  return ch == std::char_traits<char>::eof() || ch == '\n' || ch == '\r';
+  return ch == EOF || ch == '\n' || ch == '\r';
 }
 
 inline
