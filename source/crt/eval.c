@@ -25,7 +25,6 @@ static rt_data_t *intern_eval(rt_env_t *env, rt_data_t *data,
 static rt_data_t *proc_assignment(rt_env_t *env, rt_data_t *data,
 				  const bool should_def_new);
 
-static
 rt_data_t *
 proc_assignment(rt_env_t *env, rt_data_t *data, const bool should_def_new)
 {
@@ -37,6 +36,7 @@ proc_assignment(rt_env_t *env, rt_data_t *data, const bool should_def_new)
 	{ env_define(env, data->_list.list[1]->_atom.str, rhs); }
       else
 	{ env_mutate(env, data->_list.list[1]->_atom.str, rhs); }
+      ret = deep_copy(rhs);
     }
   else
     {
@@ -106,13 +106,13 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool should_cpy)
 	      if (data->_list.list[1]->tag == LIST)
 		{
 #define CPY_ENV(m) (&shallow_copy((rt_data_t *)m)->_env)
-		  rt_env_t *env_cpy = CPY_ENV(env);
+		  rt_env_t *env_cpy = new_mp_env(env);
 		  rt_data_t *expr_body = shallow_copy(data->_list.list[2]);
 		  rt_list_t *params = &data->_list.list[1]->_list;
 		  if (params->size == 0)
 		    {
 		      return (rt_data_t *)
-			make_clos_func(new_mp_env(env_cpy), NULL, expr_body);
+			make_clos_func(env_cpy, NULL, expr_body);
 		    }
 
 		  size_t i;

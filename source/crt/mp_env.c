@@ -33,7 +33,7 @@ new_mp_env(rt_env_t *outer)
   ret->base.clone = mp_env_clone;
   ret->base.dealloc = mp_env_dealloc;
 
-  ret->outer = outer;
+  ret->outer = (rt_env_t *) shallow_copy((rt_data_t *) outer);
 
   return (rt_env_t*) ret;
 }

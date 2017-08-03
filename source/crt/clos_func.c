@@ -11,7 +11,7 @@ static bool s_dealloc (void *self);
 rt_udt_t *
 make_clos_func (rt_env_t *env, char *param, rt_data_t *body)
 {
-  clos_func_t *ret = calloc(sizeof (clos_func_t), 1);
+  clos_func_t *ret = calloc(1, sizeof (clos_func_t));
 
   ret->base = create_base_udt("<function>");
   ret->base.sclone = s_sclone;
