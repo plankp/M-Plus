@@ -16,5 +16,5 @@ factorial_naive =	# Definitions are recursive!
     plus_1 = x -> x + 1;
     plus_1(6)
   end)()],
-  factorial_naive(5)
+  [@"factorial of 5", factorial_naive(5)]
 ]

@@ -32,12 +32,18 @@ SCENARIO("list behaviour", "[list]") {
     }
 
     WHEN("the list is shallow copied") {
+      size_t prev_refs = list->_list.refs;
       size_t prev_atom_refs = list->_list.list[2]->_atom.refs;
       rt_data_t *shcpy = shallow_copy(list);
-      THEN("refs of the elements are increased by 1, memory is different") {
-	REQUIRE(list->_list.list != shcpy->_list.list);
+      THEN("refs of list is increased by 1, memory is same") {
+	REQUIRE(list->_list.refs == prev_refs + 1);
+      }
+      AND_THEN("refs of elements do not change") {
+	REQUIRE(list->_list.list[2]->_atom.refs == prev_atom_refs);
+      }
+      AND_THEN("memory is the same") {
+	REQUIRE(list->_list.list == shcpy->_list.list);
 	REQUIRE(list->_list.size == shcpy->_list.size);
-	REQUIRE(list->_list.list[2]->_atom.refs == prev_atom_refs + 1);
       }
       dealloc(&shcpy);
     }

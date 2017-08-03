@@ -43,7 +43,8 @@ extern "C"
     rt_tag_t tag;
     size_t refs;
     size_t size;
-    char str[];
+    bool ffree;
+    char *str;
   } rt_atom_t;
 
   typedef struct rt_func_t
@@ -56,8 +57,9 @@ extern "C"
   typedef struct rt_list_t
   {
     rt_tag_t tag;
+    size_t refs;
     size_t size;
-    rt_data_t *list[];
+    rt_data_t **list;
   } rt_list_t;
 
   union rt_data_t
@@ -83,15 +85,17 @@ extern "C"
 						     rt_data_t *,
 						     rt_data_t *));
 
+  extern rt_data_t *wrap_atom(const char *str);
+
   extern rt_data_t *from_atom(const char *str);
 
   extern rt_data_t *from_string(const char *str);
 
   extern rt_data_t *from_err_msg(const char *str);
 
-  extern rt_data_t *from_list(size_t size, rt_data_t *ptr[]);
+  extern rt_data_t *from_list(size_t size, rt_data_t **ptr);
 
-  extern rt_data_t *from_array(size_t size, rt_data_t *ptr[]);
+  extern rt_data_t *from_array(size_t size, rt_data_t **ptr);
 
   extern rt_data_t *alloc_string(size_t size);
 

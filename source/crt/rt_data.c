@@ -2,17 +2,6 @@
 
 #include <stdio.h>
 
-static
-const char *
-rt_tag_to_str(const rt_tag_t tag)
-{
-#define X(n) case n: return #n;
-  switch (tag)
-    { RT_TAGS }
-#undef X
-  return "ILLEGAL TYPE TAG";
-}
-
 rt_data_t *
 from_char(char c)
 {
@@ -53,6 +42,18 @@ from_func_ptr(rt_data_t *(*fptr)(rt_env_t *, rt_data_t *, rt_data_t *))
 }
 
 rt_data_t *
+wrap_atom(const char *str)
+{
+  rt_data_t *tmp = malloc(sizeof (rt_atom_t));
+  tmp->tag = ATOM;
+  tmp->_atom.refs = 1;
+  tmp->_atom.size = strlen(str);
+  tmp->_atom.ffree = false;	/* Wrapping assumes the caller will cleanup */
+  tmp->_atom.str = str;
+  return tmp;
+}
+
+rt_data_t *
 from_atom(const char *str)
 {
   rt_data_t *tmp = from_string(str);
@@ -78,7 +79,7 @@ from_err_msg(const char *str)
 }
 
 rt_data_t *
-from_array(size_t size, rt_data_t *ptr[])
+from_array(size_t size, rt_data_t **ptr)
 {
   // Performs a shallow copy
   rt_data_t *tmp = alloc_array(size);
@@ -91,7 +92,7 @@ from_array(size_t size, rt_data_t *ptr[])
 }
 
 rt_data_t *
-from_list(size_t size, rt_data_t *ptr[])
+from_list(size_t size, rt_data_t **ptr)
 {
   rt_data_t *ret = from_array(size, ptr);
   ret->tag = LIST;
@@ -102,11 +103,12 @@ rt_data_t *
 alloc_string(size_t size)
 {
   // allocates size + 1 (null-byte)
-  rt_data_t *ret = malloc(sizeof (rt_atom_t) + (size + 1) * sizeof(char));
+  rt_data_t *ret = malloc(sizeof (rt_atom_t));
   ret->tag = STR;
   ret->_atom.refs = 1;
   ret->_atom.size = size;
-  ret->_atom.str[size + 1] = '\0'; /* Set end boundary of the string */
+  ret->_atom.ffree = true;	   /* This atom is dynamically allocated */
+  ret->_atom.str = calloc(sizeof(char), size + 1);
   return ret;
 }
 
@@ -121,10 +123,11 @@ alloc_list(size_t size)
 rt_data_t *
 alloc_array(size_t size)
 {
-  rt_data_t *ret = malloc(sizeof (rt_list_t) + size * sizeof(rt_data_t *));
+  rt_data_t *ret = malloc(sizeof (rt_list_t));
   ret->tag = ARRAY;
+  ret->_list.refs = 1;
   ret->_list.size = size;
-  // ret._list.list is left untouched
+  ret->_list.list = size == 0 ? NULL : calloc(sizeof(rt_data_t *), size);
   return ret;
 }
 
@@ -151,10 +154,10 @@ shallow_copy(rt_data_t *src)
       return src;
     case UDT:			/* Based on custom implementation */
       return src->_udt.sclone(src);
-    case ARRAY:			/* Shallow copy all elements */
-      return from_array(src->_list.size, src->_list.list);
-    case LIST:			/* Shallow copy all elements */
-      return from_list(src->_list.size, src->_list.list);
+    case ARRAY:
+    case LIST:			/* Increase reference counter */
+      ++src->_list.refs;
+      return src;
     default:
       fprintf(stderr, "Attempt to shallow copy type: %s(%d)\n", rt_tag_to_str(src->tag), src->tag);
       assert(false);
@@ -212,6 +215,7 @@ dealloc(rt_data_t **src)
 	case STR:
 	case ATOM:
 	  if (--(*src)->_atom.refs > 0) return;
+	  if ((*src)->_atom.ffree) free((*src)->_atom.str);
 	  break;
 	case ENV:
 	  if (--(*src)->_env.refs > 0) return;
@@ -223,11 +227,13 @@ dealloc(rt_data_t **src)
 	case ARRAY:
 	case LIST:		/* Deallocate every element */
 	  {
+	    if (--(*src)->_list.refs > 0) return;
 	    size_t i;
 	    for (i = 0; i < (*src)->_list.size; ++i)
 	      {
 		dealloc(&(*src)->_list.list[i]);
 	      }
+	    free((*src)->_list.list);
 	    break;
 	  }
 	default:

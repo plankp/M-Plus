@@ -32,12 +32,18 @@ SCENARIO("array behaviour", "[array]") {
     }
 
     WHEN("the array is shallow copied") {
+      size_t prev_refs = array->_list.refs;
       size_t prev_atom_refs = array->_list.list[2]->_atom.refs;
       rt_data_t *shcpy = shallow_copy(array);
-      THEN("refs of the elements are increased by 1, memory is different") {
-	REQUIRE(array->_list.list != shcpy->_list.list);
+      THEN("refs of array is increased by 1, memory is same") {
+	REQUIRE(array->_list.refs == prev_refs + 1);
+      }
+      AND_THEN("refs of elements do not change") {
+	REQUIRE(array->_list.list[2]->_atom.refs == prev_atom_refs);
+      }
+      AND_THEN("memory is the same") {
+	REQUIRE(array->_list.list == shcpy->_list.list);
 	REQUIRE(array->_list.size == shcpy->_list.size);
-	REQUIRE(array->_list.list[2]->_atom.refs == prev_atom_refs + 1);
       }
       dealloc(&shcpy);
     }

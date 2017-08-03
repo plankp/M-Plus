@@ -25,6 +25,8 @@ extern "C"
 
   typedef union rt_data_t rt_data_t;
 
+  extern const char *rt_tag_to_str(const rt_tag_t tag);
+
 #ifdef __cplusplus
 };
 #endif
