@@ -2,18 +2,8 @@
 #define _MP_PARSER_HXX__
 
 #include "lexer.hxx"
-#include "visitor.hxx"
 
-#include "array.hxx"
-#include "binop.hxx"
-#include "fapply.hxx"
-#include "prefix.hxx"
-#include "postfix.hxx"
-#include "num_node.hxx"
-#include "atom_node.hxx"
-#include "cond_expr.hxx"
-#include "ident_node.hxx"
-#include "expressions.hxx"
+#include "rt_utils.h"
 
 #include <memory>
 #include <vector>
@@ -59,27 +49,27 @@ bool optional(parser_info &src, std::vector<mp_token_t::tok_type> types);
 bool optional(parser_info &src, std::vector<mp_token_t::tok_type> types,
 	      mp_token_t &ref);
 
-std::unique_ptr<syntree::expressions> parse (parser_info &src);
+rt_data_t *parse (parser_info &src);
 
-std::unique_ptr<syntree::expressions> parse_expressions (parser_info &src);
-std::unique_ptr<syntree::expressions> parse_argument_list (parser_info &src);
+std::vector<rt_data_t*> parse_expressions (parser_info &src);
+std::vector<rt_data_t*> parse_argument_list (parser_info &src);
 
-std::unique_ptr<syntree::ast> parse_expression (parser_info &src);
-std::unique_ptr<syntree::ast> parse_lazy (parser_info &src);
-std::unique_ptr<syntree::ast> parse_or (parser_info &src);
-std::unique_ptr<syntree::ast> parse_and (parser_info &src);
-std::unique_ptr<syntree::ast> parse_rel_like (parser_info &src);
-std::unique_ptr<syntree::ast> parse_cons (parser_info &src);
-std::unique_ptr<syntree::ast> parse_add_like (parser_info &src);
-std::unique_ptr<syntree::ast> parse_mul_like (parser_info &src);
-std::unique_ptr<syntree::ast> parse_prefix (parser_info &src);
-std::unique_ptr<syntree::ast> parse_exponent (parser_info &src);
-std::unique_ptr<syntree::ast> parse_postfix (parser_info &src);
-std::unique_ptr<syntree::ast> parse_fapply (parser_info &src);
-std::unique_ptr<syntree::ast> parse_fcompose (parser_info &src);
-std::unique_ptr<syntree::ast> parse_qexpr (parser_info &src);
-std::unique_ptr<syntree::ast> parse_do_end (parser_info &src);
-std::unique_ptr<syntree::ast> parse_if_expr (parser_info &src);
-std::unique_ptr<syntree::ast> parse_primitive (parser_info &src);
+rt_data_t *parse_expression (parser_info &src);
+rt_data_t *parse_lazy (parser_info &src);
+rt_data_t *parse_or (parser_info &src);
+rt_data_t *parse_and (parser_info &src);
+rt_data_t *parse_rel_like (parser_info &src);
+rt_data_t *parse_cons (parser_info &src);
+rt_data_t *parse_add_like (parser_info &src);
+rt_data_t *parse_mul_like (parser_info &src);
+rt_data_t *parse_prefix (parser_info &src);
+rt_data_t *parse_exponent (parser_info &src);
+rt_data_t *parse_postfix (parser_info &src);
+rt_data_t *parse_fapply (parser_info &src);
+rt_data_t *parse_fcompose (parser_info &src);
+rt_data_t *parse_qexpr (parser_info &src);
+rt_data_t *parse_do_end (parser_info &src);
+rt_data_t *parse_if_expr (parser_info &src);
+rt_data_t *parse_primitive (parser_info &src);
 
 #endif /* !_MP_PARSER_HXX__ */

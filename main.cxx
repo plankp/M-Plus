@@ -1,53 +1,56 @@
+#include "eval.h"
+#include "mp_env.h"
 #include "lexer.hxx"
 #include "parser.hxx"
-#include "tree_formatter.hxx"
-
-#include "ext_unary_func.hxx"
 
 #include <fstream>
-#include <iostream>
 
 int
 main (int argc, char **argv)
 {
   if (argc != 2)
     {
-      std::cerr << "MPlus  BSD 3 Clause license\nRun like this: mplus [MPlus script]" << std::endl;
+      fprintf(stderr, "MPlus  BSD 3 Clause license\nRun like this: mplus [MPlus script]\n");
       return 1;
     }
 
   try
     {
       std::ifstream s(argv[1], std::ios::in);
+      if (!s.is_open())
+	{
+	  fprintf(stderr, "File %s cannot be read\n", argv[1]);
+	  return 2;
+	}
+
       istream_wrapper wrap(s);
       parser_info info(wrap);
 
-      std::map<std::string, std::shared_ptr<rt::mp_value>> env
-      {
-	{ "print", std::shared_ptr<rt::mp_value>(new rt::ext::unary_func([](std::unique_ptr<rt::mp_value> x) {
-		std::cout << x->to_str() << std::endl;
-		return x; })) }
-      };
-
       auto tree = parse(info);
-      tree_formatter formatter;
-      formatter.visit(*tree);
-      std::cout << "\nEval demo:" << std::endl
-       		<< formatter.get_text() << std::endl;
-      auto res = tree->eval(env);
-      if (res)
-	{
-	  std::cout << res->to_str() << std::endl;
-	}
+      // // Uncomment to print tree parse tree!
+      // {
+      //   auto str = expr_to_str(tree);
+      //   printf("%s\n", str);
+      //   free(str);
+      // }
+
+      auto env = new_mp_env(nullptr);
+      init_default_env(env);
+
+      auto ret = eval(env, tree);
+      {
+        auto str = expr_to_str(ret);
+        printf("%s\n", str);
+        free(str);
+      }
+      dealloc(&ret);
+      auto denv = reinterpret_cast<rt_data_t *>(env);
+      dealloc(&denv);
+      dealloc(&tree);
     }
   catch (std::exception &err)
     {
-      std::cerr << err.what() << std::endl;
-      return 1;
-    }
-  catch (...)
-    {
-      std::cerr << "Wtf?" << std::endl;
+      fprintf(stderr, "error: %s\n", err.what());
       return 1;
     }
   return 0;
