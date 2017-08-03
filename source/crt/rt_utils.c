@@ -1,9 +1,16 @@
 #include "rt_utils.h"
 
+/* There is no snprintf in VS2013 */
+#if _MSC_VER && !__INTEL_COMPILER
+#define snprintf _snprintf
+#endif
+
 rt_data_t *
 make_nullary_expr(rt_data_t *f)
 {
-  rt_data_t *lst[] = { f };
+  rt_data_t *lst[1];
+  lst[0] = f;
+
   rt_data_t *ret = from_list(1, lst);
 
   dealloc(&f);
@@ -14,7 +21,10 @@ make_nullary_expr(rt_data_t *f)
 rt_data_t *
 make_unary_expr(rt_data_t *f, rt_data_t *t0)
 {
-  rt_data_t *lst[] = { f, t0 };
+  rt_data_t *lst[2];
+  lst[0] = f;
+  lst[1] = t0;
+
   rt_data_t *ret = from_list(2, lst);
 
   dealloc(&f);
@@ -26,7 +36,12 @@ make_unary_expr(rt_data_t *f, rt_data_t *t0)
 rt_data_t *
 make_binary_expr(rt_data_t *f, rt_data_t *t0, rt_data_t *t1)
 {
-  rt_data_t *lst[] = { f, t0, t1 };
+  rt_data_t *lst[3];
+  lst[0] = f;
+  lst[1] = t0;
+  lst[2] = t1;
+
+
   rt_data_t *ret = from_list(3, lst);
 
   dealloc(&f);
@@ -52,7 +67,7 @@ generate(rt_data_t *data,
       return str;
     }
 
-  char *frags[frag_count];
+  char **frags = malloc(frag_count * sizeof(char *));
   size_t i;
   for (i = 0; i < frag_count; ++i)
     {
@@ -71,6 +86,7 @@ generate(rt_data_t *data,
       s += sprintf(str + s, "%c%s", sep, frags[i]);
       free(frags[i]);
     }
+  free(frags);
   str[s] = end;
   str[s + 1] = '\0';
   str[0] = start;
