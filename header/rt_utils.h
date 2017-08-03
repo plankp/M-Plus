@@ -34,6 +34,12 @@ extern "C"
 
   extern bool expr_eqls(rt_data_t *lhs, rt_data_t *rhs);
 
+  // return true if comparison is valid, false if not (for example:
+  // type cannot be compared). store result in rst. Caller must
+  // ensure lhs, rhs, and rst are not NULL.
+
+  extern bool expr_cmp(rt_data_t *lhs, rt_data_t *rhs, int *rst);
+
   // *lhs and *rhs are swapped
 
   extern void swap_expr(rt_data_t **lhs, rt_data_t **rhs);

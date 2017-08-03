@@ -291,6 +291,90 @@ expr_eqls(rt_data_t *lhs, rt_data_t *rhs)
     }
 }
 
+bool
+expr_cmp(rt_data_t *lhs, rt_data_t *rhs, int *ret)
+{
+#define RET(n)					\
+  do						\
+    {						\
+      if (ret) *ret = n;			\
+      return true;				\
+    }						\
+  while (0)
+
+  if (lhs == rhs) RET(0);
+  if (lhs == NULL || rhs == NULL) return false;
+  if (lhs->tag == ERR || rhs->tag == ERR) return false;
+
+  switch (lhs->tag)
+    {
+    case CHAR:
+      switch (rhs->tag)
+	{
+	case CHAR:  RET(lhs->_char.c - rhs->_char.c);
+	case INT:   RET(lhs->_char.c - rhs->_int.i);
+	case FLOAT: RET(lhs->_char.c - rhs->_float.f);
+	default:    return false;
+	}
+    case INT:
+      switch (rhs->tag)
+	{
+	case CHAR:  RET(lhs->_int.i - rhs->_char.c);
+	case INT:   RET(lhs->_int.i - rhs->_int.i);
+	case FLOAT: RET(lhs->_int.i - rhs->_float.f);
+	default:    return false;
+	}
+    case FLOAT:
+      switch (rhs->tag)
+	{
+	case CHAR:  RET(lhs->_float.f - rhs->_char.c);
+	case INT:   RET(lhs->_float.f - rhs->_int.i);
+	case FLOAT: RET(lhs->_float.f - rhs->_float.f);
+	default:    return false;
+	}
+    case ATOM:
+      if (rhs->tag == ATOM) RET(strcmp(lhs->_atom.str, rhs->_atom.str));
+      return false;
+    case STR:
+      if (rhs->tag == STR)
+	{
+	  char *lhss = expr_to_str(lhs);
+	  char *rhss = expr_to_str(rhs);
+	  if (ret) *ret = strcmp(lhss, rhss);
+	  free(lhss);
+	  free(rhss);
+	  return true;
+	}
+      return false;
+    case LIST:
+    case ARRAY:
+      if (rhs->tag == LIST || rhs->tag == ARRAY)
+	{
+	  const size_t lhsl = lhs->_list.size;
+	  const size_t rhsl = rhs->_list.size;
+	  if (lhsl == 0) RET(-1);
+	  if (rhsl == 0) RET(1);
+	  const size_t max_cmp_len = lhsl > rhsl ? rhsl : lhsl;
+	  size_t i;
+	  int r;
+	  for (i = 0; i < max_cmp_len; ++i)
+	    {
+	      bool flag = expr_cmp(lhs->_list.list[i], rhs->_list.list[i], &r);
+	      if (flag && r != 0) RET(r);
+	      if (!flag) return false;
+	    }
+	  /* At this point, that means both arrays are the same within the
+	   * range of max_cmp_len. Now compare the array sizes.
+	   */
+	  RET(lhsl == rhsl ? 0 : (lhsl > rhsl ? 1 : 0));
+	}
+      return false;
+    default:
+      return false;
+    }
+#undef RET
+}
+
 void
 swap_expr(rt_data_t **lhs, rt_data_t **rhs)
 {
@@ -653,6 +737,27 @@ impl_error(rt_env_t *_env, rt_data_t *a, rt_data_t *_b)
   return from_err_msg("UNKNOWN ERROR");
 }
 
+#define REL_LIKE(name, op)					\
+  static							\
+  rt_data_t *							\
+  impl_##name (rt_env_t *_env, rt_data_t *a, rt_data_t *b)	\
+  {								\
+    if (a && b)							\
+      {								\
+	int ret;						\
+	if (expr_cmp(a, b, &ret)) return from_int64(ret op 0);	\
+	return from_err_msg("ILLEGAL TYPE -- " #op);		\
+      }								\
+    return from_err_msg("MISSING PARAMETERS -- " #op);		\
+  }
+
+REL_LIKE(less_than, <)
+REL_LIKE(more_than, >)
+REL_LIKE(less_eql, <=)
+REL_LIKE(more_eql, >=)
+
+#undef REL_LIKE
+
 void
 init_default_env(rt_env_t *env)
 {
@@ -677,6 +782,10 @@ init_default_env(rt_env_t *env)
   DEFINE_VAL(%, from_func_ptr(impl_percent));
   DEFINE_VAL(==, from_func_ptr(impl_eqls));
   DEFINE_VAL(/=, from_func_ptr(impl_neqls));
+  DEFINE_VAL(<, from_func_ptr(impl_less_than));
+  DEFINE_VAL(>, from_func_ptr(impl_more_than));
+  DEFINE_VAL(<=, from_func_ptr(impl_less_eql));
+  DEFINE_VAL(>=, from_func_ptr(impl_more_eql));
 
 #undef DEFINE_VAL
 }

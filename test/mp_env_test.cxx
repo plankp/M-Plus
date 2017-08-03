@@ -12,8 +12,10 @@ SCENARIO("MP Environment behaviour", "[mp_env_t]") {
     REQUIRE(env->tag == ENV);
 
     WHEN("look_up is used on a non-existant key") {
-      THEN("null is returned") {
-	REQUIRE(env_look_up(env, "z") == nullptr);
+      THEN("ERR is returned") {
+	auto ret = env_look_up(env, "z");
+	REQUIRE(ret->tag == ERR);
+	dealloc(&ret);
       }
     }
 
@@ -37,7 +39,9 @@ SCENARIO("MP Environment behaviour", "[mp_env_t]") {
       rt_data_t *tmp = from_char('b');
       env_mutate(env, "b", tmp);
       THEN("nothing will happen") {
-	REQUIRE(env_look_up(env, "b") == nullptr);
+	auto ret = env_look_up(env, "b");
+	REQUIRE(ret->tag == ERR);
+	dealloc(&ret);
       }
       AND_THEN("clean up locals") {
 	dealloc(&tmp);

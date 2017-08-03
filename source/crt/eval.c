@@ -70,6 +70,10 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool atm_should_cpy)
     case ATOM:			// Copy depends on atm_should_cpy
       {
 	rt_data_t *no_own = env_look_up(env, data->_atom.str);
+
+	/* Returns regardless of atm_should_cpy if it is an error */
+	if (no_own->tag == ERR) return no_own;
+
 	if (atm_should_cpy) return deep_copy(no_own);
 	return no_own;
       }

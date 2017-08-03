@@ -5,7 +5,7 @@
 
 factorial_naive =	# Definitions are recursive!
   x -> {
-    1                            if x == 1 or x == 0,	# Change to x < 2
+    1                            if x < 2,
     x * factorial_naive(x - 1)   else
   }
 ;
