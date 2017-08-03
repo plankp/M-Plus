@@ -11,6 +11,8 @@ You need:
 *  C99 supporting compiler
 *  C++11 supporting compiler
 
+(tested with visual studio 2013, clang 3.6, and gcc 4.8)
+
 ```
 % mkdir build
 % cd build
@@ -18,9 +20,13 @@ You need:
 % make
 ```
 
+## To run M+ tests
+
+`% ./tests`
+
 ## To run M+ interpreter
 
-`mplus [MPlus script]`
+`% ./mplus [MPlus script]`
 
 ## To code in M+
 
