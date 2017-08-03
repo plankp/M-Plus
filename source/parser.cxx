@@ -15,9 +15,7 @@ parser_info::parser_info(parser_info &&mref)
 parser_info &
 parser_info::operator=(parser_info &&mref)
 {
-  using std::swap;
-
-  swap(*this, mref);
+  *this = parser_info(std::move(mref));
   return *this;
 }
 

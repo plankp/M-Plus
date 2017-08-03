@@ -13,9 +13,7 @@ istream_wrapper::istream_wrapper(istream_wrapper &&mref)
 istream_wrapper &
 istream_wrapper::operator=(istream_wrapper &&obj)
 {
-  using std::swap;
-
-  swap(*this, obj);
+  *this = istream_wrapper(std::move(obj));
   return *this;
 }
 
@@ -251,8 +249,7 @@ next_opt_ident (istream_wrapper &src, std::stringstream &buf)
   else src.unget(ch);
 }
 
-static const std::map<std::string, mp_token_t::tok_type> KWORDS
-{
+static std::map<std::string, mp_token_t::tok_type> KWORDS{
   { "mod", mp_token_t::K_MOD },
   { "if", mp_token_t::K_IF },
   { "else", mp_token_t::K_ELSE },
@@ -286,7 +283,7 @@ void
 next_zero_number (istream_wrapper &src, std::stringstream &sstr)
 {
   int ch = src.get();
-  bool (*pred)(int) = nullptr;
+  bool (*pred)(int) = NULL;
   switch (ch)
     {
     case 'b':
