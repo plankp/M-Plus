@@ -4,10 +4,11 @@
 #include "token.hxx"
 
 #include <map>
+#include <cstdio>
 #include <string>
 #include <istream>
 #include <sstream>
-#include <algorithm>
+#include <utility>
 
 class istream_wrapper
 {
