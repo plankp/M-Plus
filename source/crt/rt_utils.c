@@ -2,7 +2,7 @@
 
 /* There is no snprintf in VS2013 */
 #if _MSC_VER && !__INTEL_COMPILER
-#define _CRT_SECURE_NO_DEPRECATE
+#define _CRT_SECURE_NO_WARNINGS
 #define snprintf _snprintf
 #endif
 

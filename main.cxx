@@ -27,14 +27,13 @@ main (int argc, char **argv)
       parser_info info(wrap);
 
       auto tree = parse(info);
-      // print tree here!
-      {
-        auto str = expr_to_str(tree);
-        printf("%s\n", str);
-        free(str);
-      }
+      // // Uncomment to print tree parse tree!
+      // {
+      //   auto str = expr_to_str(tree);
+      //   printf("%s\n", str);
+      //   free(str);
+      // }
 
-      printf("Attempt to execute code\n");
       auto env = new_mp_env(nullptr);
       init_default_env(env);
 
