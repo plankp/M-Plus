@@ -5,7 +5,7 @@
 rt_data_t *
 from_char(char c)
 {
-  // Should cache all values
+  /* Should cache all values */
   rt_data_t *ret = malloc(sizeof(rt_char_t));
   ret->tag = CHAR;
   ret->_char.c = c;
@@ -15,7 +15,7 @@ from_char(char c)
 rt_data_t *
 from_int64(int64_t i64)
 {
-  // Should cache value -128 to 128
+  /* Should cache value -128 to 128 */
   rt_data_t *ret = calloc(1, sizeof(rt_int_t));
   ret->tag = INT;
   ret->_int.i = i64;
@@ -81,7 +81,7 @@ from_err_msg(const char *str)
 rt_data_t *
 from_array(size_t size, rt_data_t **ptr)
 {
-  // Performs a shallow copy
+  /* Performs a shallow copy */
   rt_data_t *tmp = alloc_array(size);
   size_t i;
   for (i = 0; i < size; ++i)
@@ -102,7 +102,7 @@ from_list(size_t size, rt_data_t **ptr)
 rt_data_t *
 alloc_string(size_t size)
 {
-  // allocates size + 1 (null-byte)
+  /* allocates size + 1 (null-byte) */
   rt_data_t *ret = calloc(1, sizeof (rt_atom_t));
   ret->tag = STR;
   ret->_atom.refs = 1;

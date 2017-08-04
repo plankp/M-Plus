@@ -1,11 +1,5 @@
 #include "rt_utils.h"
 
-/* There is no snprintf in VS2013 */
-#if _MSC_VER && !__INTEL_COMPILER
-#define _CRT_SECURE_NO_WARNINGS
-#define snprintf _snprintf
-#endif
-
 rt_data_t *
 make_nullary_expr(rt_data_t *f)
 {
@@ -121,7 +115,7 @@ expr_to_str(rt_data_t *data)
       }
     case ERR:
       {
-	// error: => 7 chars
+	/* error: => 7 chars */
 	const size_t s = (data->_atom.size + 8) * sizeof (char);
 	str = malloc(s);
 	sprintf(str, "error: %s", data->_atom.str);
@@ -129,7 +123,7 @@ expr_to_str(rt_data_t *data)
       }
     case ATOM:
       {
-	// Atoms already contain length information
+	/* Atoms already contain length information */
 	const size_t s = (data->_atom.size + 1) * sizeof (char);
 	str = malloc(s);
 	memcpy(str, data->_atom.str, s);
@@ -137,7 +131,7 @@ expr_to_str(rt_data_t *data)
       }
     case STR:
       {
-	// Preserve '@', remove quoting
+	/* Preserve '@', remove quoting */
 	size_t s = data->_atom.size;
 	if (s > 2 && data->_atom.str[1] == '"')	/* @"" is at least 3 chars */
 	  {
@@ -880,7 +874,12 @@ init_default_env(rt_env_t *env)
   MAP_VAL(#name, val)
 
   if (!env) return;
-  
+
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning(push)
+#pragma warning(disable : 4127)
+#endif
+
   DEFINE_VAL(:, from_func_ptr(impl_cons));
   DEFINE_VAL(+, from_func_ptr(impl_add));
   DEFINE_VAL(-, from_func_ptr(impl_sub));
@@ -908,6 +907,10 @@ init_default_env(rt_env_t *env)
   DEFINE_VAL(current_env, from_func_ptr(impl_get_env));
   MAP_VAL("eval'", from_func_ptr(impl_eval));
   MAP_VAL("apply'", from_func_ptr(impl_apply));
+
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning(pop)
+#endif
 
 #undef DEFINE_VAL
 #undef MAP_VAL
