@@ -11,7 +11,7 @@ factorial_naive =	# Definitions are recursive!
 ;
 
 [
-  [@"6 + 1", (x -> x + 1)(6)],
+  [@"2 + 3", ((a, b) -> a + b)(2, 3)],
   [@"6 + 1", (() -> do	# do-end does not create a new scope!
     plus_1 = x -> x + 1;
     plus_1(6)

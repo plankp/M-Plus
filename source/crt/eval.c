@@ -105,8 +105,8 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool should_cpy)
 	    {
 	      if (data->_list.list[1]->tag == LIST)
 		{
-#define CPY_ENV(m) (&shallow_copy((rt_data_t *)m)->_env)
-		  rt_env_t *env_cpy = new_mp_env(env);
+		  rt_env_t *env_cpy =
+		    new_mp_env(&shallow_copy((rt_data_t *) env)->_env);
 		  rt_data_t *expr_body = shallow_copy(data->_list.list[2]);
 		  rt_list_t *params = &data->_list.list[1]->_list;
 		  if (params->size == 0)
@@ -122,13 +122,12 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool should_cpy)
 			make_clos_func(env_cpy,
 				       params->list[i - 1]->_atom.str,
 				       expr_body);
-		      env_cpy = CPY_ENV(env_cpy);
+		      env_cpy = &shallow_copy((rt_data_t *) env_cpy)->_env;
 		    }
 		  /* Deallocate that extra-copied env_cpy */
 		  rt_data_t *dr = (rt_data_t *) env_cpy;
 		  dealloc(&dr);
 		  return expr_body;
-#undef CPY_ENV
 		}
 	      return from_err_msg("EXPECT LIST FOR PARAMETERS -- ->");
 	    }
