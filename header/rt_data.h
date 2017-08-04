@@ -4,6 +4,7 @@
 #include "rt_tags.h"
 #include "i_rt_env.h"
 #include "i_rt_udt.h"
+#include "rt_error.h"
 
 /* Getting rid of <sal.h> C4001 warnings */
 #if _MSC_VER && !__INTEL_COMPILER
@@ -48,7 +49,7 @@ extern "C"
     double f;
   } rt_float_t;
   
-  typedef struct rt_atom_t	/* Tag must be either ATOM, STR, or ERR */
+  typedef struct rt_atom_t	/* Tag must be either ATOM or STR */
   {
     rt_tag_t tag;
     size_t refs;
@@ -81,6 +82,7 @@ extern "C"
     rt_func_t _func;
     rt_env_t _env;
     rt_atom_t _atom;
+    rt_error_t _err;
     rt_list_t _list;
     rt_udt_t _udt;
   };
@@ -101,11 +103,11 @@ extern "C"
 
   extern rt_data_t *from_string(const char *str);
 
-  extern rt_data_t *from_err_msg(const char *str);
-
   extern rt_data_t *from_list(size_t size, rt_data_t **ptr);
 
   extern rt_data_t *from_array(size_t size, rt_data_t **ptr);
+  
+  extern rt_data_t *from_err_msg(const char *str);
 
   extern rt_data_t *alloc_string(size_t size);
 

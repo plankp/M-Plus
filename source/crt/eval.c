@@ -4,7 +4,7 @@
   rt_data_t *name = value;					\
   if (!name)							\
     {								\
-      ret = from_err_msg("TYPE IS NULL -- EVAL");		\
+      ret = from_err_msg("TYPE IS NULL -- eval");		\
       goto name## _ ##id;					\
     }								\
   if (name->tag == ERR)						\

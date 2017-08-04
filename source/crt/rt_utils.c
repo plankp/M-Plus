@@ -115,10 +115,15 @@ expr_to_str(rt_data_t *data)
       }
     case ERR:
       {
-	/* error: => 7 chars */
-	const size_t s = (data->_atom.size + 8) * sizeof (char);
-	str = malloc(s);
-	sprintf(str, "error: %s", data->_atom.str);
+	if (data->_err.content)
+	  {
+	    char *tmp = expr_to_str(data->_err.content);
+	    const size_t s = snprintf(NULL, 0, "error: %s", tmp) + 1;
+	    str = malloc(s * sizeof (char));
+	    sprintf(str, "error: %s", tmp);
+	    free(tmp);
+	  }
+	else str = clone_str("unknown error");
 	break;
       }
     case STR:
@@ -722,10 +727,7 @@ impl_error(rt_env_t *_env, rt_data_t *a, rt_data_t *_b)
 {
   if (a)
     {
-      char *msg = expr_to_str(a);
-      rt_data_t *err = from_err_msg(msg);
-      free(msg);
-      return err;
+      return create_error(shallow_copy(a));
     }
   return from_err_msg("UNKNOWN ERROR");
 }

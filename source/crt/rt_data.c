@@ -71,14 +71,6 @@ from_string(const char *str)
 }
 
 rt_data_t *
-from_err_msg(const char *str)
-{
-  rt_data_t *tmp = from_string(str);
-  tmp->tag = ERR;
-  return tmp;
-}
-
-rt_data_t *
 from_array(size_t size, rt_data_t **ptr)
 {
   /* Performs a shallow copy */
@@ -141,7 +133,9 @@ shallow_copy(rt_data_t *src)
     case CHAR:  return from_char(src->_char.c);
     case INT:   return from_int64(src->_int.i);
     case FLOAT: return from_double(src->_float.f);
-    case ERR:
+    case ERR:			/* Increase reference counter */
+      ++src->_err.refs;
+      return src;
     case STR:
     case ATOM:			/* Increase reference counter */
       ++src->_atom.refs;
@@ -176,7 +170,7 @@ deep_copy(const rt_data_t *src)
     case FLOAT: return from_double(src->_float.f);
     case ATOM:  return from_atom(src->_atom.str);
     case STR:   return from_string(src->_atom.str);
-    case ERR:   return from_err_msg(src->_atom.str);
+    case ERR:   return create_error(shallow_copy(src->_err.content));
     case FUNC:  return from_func_ptr(src->_func.fptr);
     case ENV:   return env_clone(&src->_env);
     case UDT:   return src->_udt.dclone(src);
@@ -212,6 +206,9 @@ dealloc(rt_data_t **src)
 	  if (--(*src)->_func.refs > 0) return;
 	  break;
 	case ERR:
+	  if (--(*src)->_err.refs > 0) return;
+	  dealloc(&(*src)->_err.content);
+	  break;
 	case STR:
 	case ATOM:
 	  if (--(*src)->_atom.refs > 0) return;
@@ -244,4 +241,10 @@ dealloc(rt_data_t **src)
 	}
       free(*src);
     }
+}
+
+rt_data_t *
+from_err_msg(const char *str)
+{
+  return create_error(from_string(str));
 }
