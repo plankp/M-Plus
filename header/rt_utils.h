@@ -1,6 +1,8 @@
 #ifndef _C_MP_RT_UTILS_H__
 #define _C_MP_RT_UTILS_H__
 
+#include "eval.h"
+#include "utils.h"
 #include "mp_env.h"
 #include "rt_data.h"
 

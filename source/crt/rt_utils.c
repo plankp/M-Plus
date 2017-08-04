@@ -42,7 +42,6 @@ make_binary_expr(rt_data_t *f, rt_data_t *t0, rt_data_t *t1)
   lst[1] = t0;
   lst[2] = t1;
 
-
   rt_data_t *ret = from_list(3, lst);
 
   dealloc(&f);
@@ -121,6 +120,13 @@ expr_to_str(rt_data_t *data)
 	break;
       }
     case ERR:
+      {
+	// error: => 7 chars
+	const size_t s = (data->_atom.size + 8) * sizeof (char);
+	str = malloc(s);
+	sprintf(str, "error: %s", data->_atom.str);
+	break;
+      }
     case ATOM:
       {
 	// Atoms already contain length information
@@ -148,21 +154,11 @@ expr_to_str(rt_data_t *data)
 	break;
       }
     case FUNC:
-      {
-	const char *tmp = "<function>";
-	const size_t s = (strlen(tmp) + 1) * sizeof(char);
-	str = malloc(s);
-	memcpy(str, tmp, s);
+	str = clone_str("<function>");
 	break;
-      }
     case ENV:
-      {
-	const char *tmp = "<environment>";
-	const size_t s = (strlen(tmp) + 1) * sizeof(char);
-	str = malloc(s);
-	memcpy(str, tmp, s);
+	str = clone_str("<environment>");
 	break;
-      }
     case UDT:
       if (data->_udt.to_str) str = data->_udt.to_str(data);
       else
@@ -735,7 +731,7 @@ impl_percent(rt_env_t *_env, rt_data_t *a, rt_data_t *_b)
 
   switch (a->tag)
     {
-    case INT:   return from_double(a->_int.i / 100);
+    case INT:   return from_double(a->_int.i / 100.0);
     case FLOAT: return from_double(a->_float.f / 100.0);
     default:    return from_err_msg("ILLEGAL TYPE -- %");
     }
@@ -748,10 +744,69 @@ impl_error(rt_env_t *_env, rt_data_t *a, rt_data_t *_b)
   if (a)
     {
       char *msg = expr_to_str(a);
-      from_err_msg(msg);
+      rt_data_t *err = from_err_msg(msg);
       free(msg);
+      return err;
     }
   return from_err_msg("UNKNOWN ERROR");
+}
+
+static
+rt_data_t *
+impl_print(rt_env_t *_env, rt_data_t *a, rt_data_t *_b)
+{
+  if (a)
+    {
+      char *msg = expr_to_str(a);
+      printf(msg);
+      free(msg);
+      return deep_copy(a);
+    }
+  return from_err_msg("MISSING PARAMETERS -- print");
+}
+
+
+static
+rt_data_t *
+impl_newline(rt_env_t *_env, rt_data_t *a, rt_data_t *_b)
+{
+  if (a)
+    {
+      return from_err_msg("EXCESS PARAMETERS -- newline");
+    }
+  printf("\n");
+  return alloc_list(0);
+}
+
+static
+rt_data_t *
+impl_read(rt_env_t *_env, rt_data_t *a, rt_data_t *_b)
+{
+  if (a)
+    {
+      return from_err_msg("EXCESS PARAMETERS -- read");
+    }
+
+  int ch = getchar();
+  if (ch == EOF) return alloc_array(0);
+  return from_char(ch);
+}
+
+static
+rt_data_t *
+impl_compose(rt_env_t *env, rt_data_t *a, rt_data_t *b)
+{
+  if (a && b)
+    {
+      /* (-> (x) (a (b x)) */
+      return eval(env,
+		  make_binary_expr(from_atom("->"),
+				   make_nullary_expr(from_atom("x")),
+				   make_unary_expr(deep_copy(a),
+						   make_unary_expr(deep_copy(b),
+								   from_atom("x")))));
+    }
+  return from_err_msg("MISSING PARAMETERS -- .");
 }
 
 #define REL_LIKE(name, op)					\
@@ -788,7 +843,7 @@ init_default_env(rt_env_t *env)
   while (0)
 
   if (!env) return;
-  DEFINE_VAL(error, from_func_ptr(impl_error));
+  
   DEFINE_VAL(:, from_func_ptr(impl_cons));
   DEFINE_VAL(+, from_func_ptr(impl_add));
   DEFINE_VAL(-, from_func_ptr(impl_sub));
@@ -797,12 +852,21 @@ init_default_env(rt_env_t *env)
   DEFINE_VAL(mod, from_func_ptr(impl_mod));
   DEFINE_VAL(^, from_func_ptr(impl_pow));
   DEFINE_VAL(%, from_func_ptr(impl_percent));
+
   DEFINE_VAL(==, from_func_ptr(impl_eqls));
   DEFINE_VAL(/=, from_func_ptr(impl_neqls));
+
   DEFINE_VAL(<, from_func_ptr(impl_less_than));
   DEFINE_VAL(>, from_func_ptr(impl_more_than));
   DEFINE_VAL(<=, from_func_ptr(impl_less_eql));
   DEFINE_VAL(>=, from_func_ptr(impl_more_eql));
+
+  DEFINE_VAL(., from_func_ptr(impl_compose));
+
+  DEFINE_VAL(error, from_func_ptr(impl_error));
+  DEFINE_VAL(print, from_func_ptr(impl_print));
+  DEFINE_VAL(newline, from_func_ptr(impl_newline));
+  DEFINE_VAL(read, from_func_ptr(impl_read));
 
 #undef DEFINE_VAL
 }
