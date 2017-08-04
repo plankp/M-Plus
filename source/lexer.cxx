@@ -166,9 +166,6 @@ next_token (istream_wrapper &src)
 	      case '=':
 		return { mp_token_t::Y_EQL,
 		    src.get_line_num(), src.get_col_num(), "==" };
-	      case '>':
-		return { mp_token_t::Y_MACRO,
-		    src.get_line_num(), src.get_col_num(), "=>" };
 	      default:
 		src.unget(ch);
 		return { mp_token_t::Y_DECL,
@@ -250,7 +247,9 @@ static std::map<std::string, mp_token_t::tok_type> KWORDS{
   { "or", mp_token_t::K_OR },
   { "do", mp_token_t::K_DO },
   { "end", mp_token_t::K_END },
-  { "lazy", mp_token_t::K_LAZY }
+  { "lazy", mp_token_t::K_LAZY },
+  { "try", mp_token_t::K_TRY },
+  { "catch", mp_token_t::K_CATCH }
 };
 
 mp_token_t

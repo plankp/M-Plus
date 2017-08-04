@@ -69,6 +69,7 @@ rt_data_t *parse_postfix (parser_info &src);
 rt_data_t *parse_fapply (parser_info &src);
 rt_data_t *parse_fcompose (parser_info &src);
 rt_data_t *parse_qexpr (parser_info &src);
+rt_data_t *parse_try_catch (parser_info &src);
 rt_data_t *parse_do_end (parser_info &src);
 rt_data_t *parse_if_expr (parser_info &src);
 rt_data_t *parse_primitive (parser_info &src);

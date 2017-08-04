@@ -32,6 +32,8 @@
   X(K_DO)					\
   X(K_END)					\
   X(K_LAZY)					\
+  X(K_TRY)					\
+  X(K_CATCH)					\
   X(Y_ADD)					\
   X(Y_SUB)					\
   X(Y_MUL)					\
@@ -46,7 +48,6 @@
   X(Y_SET)					\
   X(Y_DECL)					\
   X(Y_YIELD)					\
-  X(Y_MACRO)					\
   X(Y_LT)					\
   X(Y_GT)					\
   X(Y_LE)					\

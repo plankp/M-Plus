@@ -388,13 +388,42 @@ rt_data_t *
 parse_qexpr (parser_info &src)
 {
   // = '&' qexpr
-  // | do_end
+  // | try_catch
 
   mp_token_t tok;
   if (optional(src, { mp_token_t::Y_QEXPR }, tok))
     {
       return make_unary_expr(from_atom(tok.text.c_str()),
 			     parse_qexpr(src));
+    }
+  return parse_try_catch(src);
+}
+
+rt_data_t *
+parse_try_catch (parser_info &src)
+{
+  // = 'try' 'catch' #=> Parser error
+  // | 'try' expression 'catch' expression
+  // | 'try' expression 'catch' '->' IDENT expression
+  // | do_end
+  if (optional(src, { mp_token_t::K_TRY }))
+    {
+      mp_token_t tok;
+      if (optional(src, { mp_token_t::K_CATCH }, tok))
+	{
+	  throw parser_error(tok, "Empty try-catch is an illegal construct");
+	}
+      auto try_act = parse_expression(src);
+      one_of(src, { mp_token_t::K_CATCH });
+      rt_data_t *catch_sto = nullptr;
+      if (optional(src, { mp_token_t::Y_YIELD }))
+	{
+	  catch_sto = from_atom(one_of(src, { mp_token_t::L_IDENT }).text.c_str());
+	}
+      else catch_sto = alloc_list(0);
+      return make_binary_expr(from_atom("try"),
+			      try_act,
+			      make_unary_expr(catch_sto, parse_expression(src)));
     }
   return parse_do_end(src);
 }
@@ -529,12 +558,11 @@ parse_primitive (parser_info &src)
   //
   // <<produce>>
   // = '->'
-  // | '=>'
   //
   // <<params>>
   // = IDENT
   // | IDENT ',' <<params>>
-  #define impl_produce { mp_token_t::Y_YIELD, mp_token_t::Y_MACRO }
+  #define impl_produce { mp_token_t::Y_YIELD }
 
   if (optional(src, { mp_token_t::P_LSQUARE }))
     {

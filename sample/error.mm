@@ -3,4 +3,10 @@
 #   Triggers an error and done!
 #
 
-error(10)
+try
+  error(10)
+catch -> a do
+  print(@"Errored with message ");
+  print(a);
+  newline()
+end

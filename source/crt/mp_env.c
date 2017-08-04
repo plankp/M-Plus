@@ -139,7 +139,9 @@ mp_env_clone (const void *_self)
       struct mp_env_pair *p = self->bucket[i];
       while (p)
 	{
-	  env_define(ret, p->key, deep_copy(p->value));
+	  rt_data_t *tmp = deep_copy(p->value);
+	  env_define(ret, p->key, tmp);
+	  dealloc(&tmp);
 	  p = p->next;
 	}
     }

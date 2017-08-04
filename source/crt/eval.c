@@ -162,6 +162,31 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool should_cpy)
 	      return ret;
 	    }
 
+	  if (strcmp("try", id) == 0) /* try */
+	    {
+	      rt_data_t *ret = NULL;
+	      GUARD_DO(body, eval(env, data->_list.list[1]), try);
+	      /* Here means try did not throw error. return it */
+	      return body;
+	      GUARD_END(body, try);
+
+	      /* Here means try did throw error. */
+	      if (data->_list.list[2]->tag == LIST)
+		{
+		  if (data->_list.list[2]->_list.list[0]->tag == ATOM)
+		    {
+		      env_define(env,
+				 data->_list.list[2]->_list.list[0]->_atom.str,
+				 ret->_err.content);
+		    }
+		  GUARD_DO(cbody, eval(env, data->_list.list[2]->_list.list[1]),
+			   catch);
+		  return cbody;
+		  GUARD_END(cbody, catch);
+		}
+	      return ret;
+	    }
+
 	  if (strcmp("do", id) == 0) /* Do-end block */
 	    {
 	      /* GUARD macros do not work here! */
