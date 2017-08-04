@@ -13,7 +13,9 @@ istream_wrapper::istream_wrapper(istream_wrapper &&mref)
 istream_wrapper &
 istream_wrapper::operator=(istream_wrapper &&obj)
 {
-  *this = istream_wrapper(std::move(obj));
+  using std::swap;
+
+  swap(*this, obj);
   return *this;
 }
 

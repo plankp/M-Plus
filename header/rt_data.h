@@ -5,11 +5,21 @@
 #include "i_rt_env.h"
 #include "i_rt_udt.h"
 
+/* Getting rid of <sal.h> C4001 warnings */
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning(push)
+#pragma warning(disable : 4001)
+#endif
+
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning(pop)
+#endif
 
 #ifndef __cplusplus
 #include <stdbool.h>

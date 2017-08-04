@@ -12,10 +12,20 @@
 #include "mp_env.h"
 #include "rt_data.h"
 
+/* Getting rid of <sal.h> C4001 warnings */
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning(push)
+#pragma warning(disable : 4001)
+#endif
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning(pop)
+#endif
 
 #ifndef __cplusplus
 #include <stdbool.h>

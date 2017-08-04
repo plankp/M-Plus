@@ -309,6 +309,11 @@ expr_cmp(rt_data_t *lhs, rt_data_t *rhs, int *ret)
     }						\
   while (0)
 
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning(push)
+#pragma warning(disable : 4127)
+#endif
+
   if (lhs == rhs) RET(0);
   if (lhs == NULL || rhs == NULL) return false;
   if (lhs->tag == ERR || rhs->tag == ERR) return false;
@@ -379,6 +384,11 @@ expr_cmp(rt_data_t *lhs, rt_data_t *rhs, int *ret)
     default:
       return false;
     }
+
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning(pop)
+#endif
+
 #undef RET
 }
 
