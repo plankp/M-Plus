@@ -162,6 +162,15 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool should_cpy)
 	      return ret;
 	    }
 
+	  /* Early returns in the code causes Warning C4702
+	   * when it should not. The code is perfectly
+	   * reachable (since there are gotos to make it
+	   * work).
+	   */
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning(push)
+#pragma warning(disable : 4702)
+#endif
 	  if (strcmp("try", id) == 0) /* try */
 	    {
 	      rt_data_t *ret = NULL;
@@ -186,6 +195,9 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool should_cpy)
 		}
 	      return ret;
 	    }
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning(pop)
+#endif
 
 	  if (strcmp("do", id) == 0) /* Do-end block */
 	    {
