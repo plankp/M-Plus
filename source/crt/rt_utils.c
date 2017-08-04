@@ -121,30 +121,13 @@ expr_to_str(rt_data_t *data)
 	sprintf(str, "error: %s", data->_atom.str);
 	break;
       }
+    case STR:
     case ATOM:
       {
 	/* Atoms already contain length information */
 	const size_t s = (data->_atom.size + 1) * sizeof (char);
 	str = malloc(s);
 	memcpy(str, data->_atom.str, s);
-	break;
-      }
-    case STR:
-      {
-	/* Preserve '@', remove quoting */
-	size_t s = data->_atom.size;
-	if (s > 2 && data->_atom.str[1] == '"')	/* @"" is at least 3 chars */
-	  {
-	    s -= 2;
-	  }
-	str = malloc((s + 1) * sizeof (char));
-	if (s == data->_atom.size) memcpy(str, data->_atom.str, s + 1);
-	else
-	  {
-	    memcpy(str + 1, data->_atom.str + 2, s);
-	    str[0] = '@';
-	    str[s] = '\0';
-	  }
 	break;
       }
     case FUNC:
@@ -348,15 +331,7 @@ expr_cmp(rt_data_t *lhs, rt_data_t *rhs, int *ret)
       if (rhs->tag == ATOM) RET(strcmp(lhs->_atom.str, rhs->_atom.str));
       return false;
     case STR:
-      if (rhs->tag == STR)
-	{
-	  char *lhss = expr_to_str(lhs);
-	  char *rhss = expr_to_str(rhs);
-	  if (ret) *ret = strcmp(lhss, rhss);
-	  free(lhss);
-	  free(rhss);
-	  return true;
-	}
+      if (rhs->tag == STR) RET(strcmp(lhs->_atom.str, rhs->_atom.str));
       return false;
     case LIST:
     case ARRAY:

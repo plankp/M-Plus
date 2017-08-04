@@ -496,6 +496,23 @@ conv_ll(const std::string& text)
   return std::stoll(text);
 }
 
+static
+std::string
+remove_clutter(const std::string &str)
+{
+  // Just in case, should never happen!
+  if (str.length() == 0) return "";
+
+  // Atom with length of 1 must be @
+  if (str.length() == 1) return "";
+  // Atom with lrngth of 2 must be @<char>
+  if (str.length() == 2) return std::string(1, str[1]);
+  // @"<str?>"
+  if (str[1] == '"') return str.substr(2, str.size() - 3);
+  // @<str>
+  return str.substr(1);
+}
+
 rt_data_t *
 parse_primitive (parser_info &src)
 {
@@ -615,7 +632,7 @@ parse_primitive (parser_info &src)
 	}
       return from_double(std::stod(tok.text));
     }
-  return from_string(one_of(src, { mp_token_t::L_ATOM }).text.c_str());
+  return from_string(remove_clutter(one_of(src, { mp_token_t::L_ATOM }).text).c_str());
   
   #undef impl_produce
 }
