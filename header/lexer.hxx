@@ -24,7 +24,7 @@ public:
   ~istream_wrapper() = default;
 
   istream_wrapper &operator=(const istream_wrapper &obj) = delete;
-  istream_wrapper &operator=(istream_wrapper &&obj);
+  istream_wrapper &operator=(istream_wrapper &&obj) = delete;
 
   int peek(void);
   int get(void);

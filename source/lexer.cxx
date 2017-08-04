@@ -10,15 +10,6 @@ istream_wrapper::istream_wrapper(istream_wrapper &&mref)
 {
 }
 
-istream_wrapper &
-istream_wrapper::operator=(istream_wrapper &&obj)
-{
-  using std::swap;
-
-  swap(*this, obj);
-  return *this;
-}
-
 int
 istream_wrapper::peek(void)
 {

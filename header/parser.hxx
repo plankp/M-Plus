@@ -25,7 +25,7 @@ public:
   ~parser_info() = default;
 
   parser_info &operator=(const parser_info &ref) = delete;
-  parser_info &operator=(parser_info &&mref);
+  parser_info &operator=(parser_info &&mref) = delete;
 
   mp_token_t peek(void);
   mp_token_t get(void);
