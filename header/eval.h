@@ -10,7 +10,9 @@ extern "C"
 {
 #endif
 
-rt_data_t *eval(rt_env_t *env, rt_data_t *data);
+  extern rt_data_t *eval(rt_env_t *env, rt_data_t *data);
+
+  extern rt_data_t *apply(rt_env_t *env, rt_data_t *val, rt_list_t *param);
 
 #ifdef __cplusplus
 };

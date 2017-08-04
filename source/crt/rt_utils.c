@@ -794,6 +794,40 @@ impl_read(rt_env_t *_env, rt_data_t *a, rt_data_t *_b)
 
 static
 rt_data_t *
+impl_get_env (rt_env_t *env, rt_data_t *a, rt_data_t *b)
+{
+  if (a) return from_err_msg("EXCESS PARAMETERS -- current_env");
+  return shallow_copy((rt_data_t *) env);
+}
+
+static
+rt_data_t *
+impl_eval (rt_env_t *env, rt_data_t *a, rt_data_t *b)
+{
+  if (a && b)
+    {
+      if (a->tag != ENV) return from_err_msg("EXPECTED ENVIRONMENT -- eval'");
+      return eval(&a->_env, b);
+    }
+
+  return from_err_msg("MISSING PARAMETERS -- eval'");
+}
+
+static
+rt_data_t *
+impl_apply (rt_env_t *env, rt_data_t *a, rt_data_t *b)
+{
+  if (a && b)
+    {
+      if (b->tag != LIST) return from_err_msg("EXPECTED LIST -- apply'");
+      return apply(env, a, &b->_list);
+    }
+
+  return from_err_msg("MISSING PARAMETERS -- apply'");
+}
+
+static
+rt_data_t *
 impl_compose(rt_env_t *env, rt_data_t *a, rt_data_t *b)
 {
   if (a && b)
@@ -833,14 +867,17 @@ REL_LIKE(more_eql, >=)
 void
 init_default_env(rt_env_t *env)
 {
-#define DEFINE_VAL(name, val)			\
+#define MAP_VAL(name, val)			\
   do						\
     {						\
       rt_data_t *v = val;			\
-      env_define(env, #name, v);		\
+      env_define(env, name, v);			\
       dealloc(&v);				\
     }						\
   while (0)
+
+#define DEFINE_VAL(name, val)			\
+  MAP_VAL(#name, val)
 
   if (!env) return;
   
@@ -868,5 +905,10 @@ init_default_env(rt_env_t *env)
   DEFINE_VAL(newline, from_func_ptr(impl_newline));
   DEFINE_VAL(read, from_func_ptr(impl_read));
 
+  DEFINE_VAL(current_env, from_func_ptr(impl_get_env));
+  MAP_VAL("eval'", from_func_ptr(impl_eval));
+  MAP_VAL("apply'", from_func_ptr(impl_apply));
+
 #undef DEFINE_VAL
+#undef MAP_VAL
 }

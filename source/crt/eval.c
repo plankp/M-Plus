@@ -205,77 +205,28 @@ intern_eval(rt_env_t *env, rt_data_t *data, const bool should_cpy)
 	    }
 	}
 
-      /* Default strategy: apply */
-      switch (data->_list.size)
+      rt_data_t *ret = NULL;
+      GUARD_DO(base, eval(env, data->_list.list[0]), apply);
+      rt_data_t *params = alloc_list(data->_list.size - 1);
+      size_t i;
+      for (i = 0; i < params->_list.size; ++i)
 	{
-	case 1:			// Parameter-less function call
-	  {
-	    rt_data_t *ret = NULL;
-	    GUARD_DO(base, eval(env, data->_list.list[0]), g1);
-
-	    switch (base->tag) // base is guaranteed to not be ERR
-	      {
-	      case FUNC:
-		ret = base->_func.fptr(env, NULL, NULL);
-		break;
-	      case UDT:
-		ret = base->_udt.apply(base, env, NULL);
-		break;
-	      default:
-		ret = from_err_msg("TYPE IS NOT APPLIABLE -- APPLY");
-		break;
-	      }
-	    GUARD_END(base, g1);
-	    return ret;
-	  }
-	case 2:			// Function call or Unary operator
-	  {
-	    rt_data_t *ret = NULL;
-	    GUARD_DO(base, eval(env, data->_list.list[0]), g2);
-	    GUARD_DO(p1, eval(env, data->_list.list[1]), g2);
-
-	    switch (base->tag) // base is guaranteed to not be ERR
-	      {
-	      case FUNC:
-		ret = base->_func.fptr(env, p1, NULL);
-		break;
-	      case UDT:
-		ret = base->_udt.apply(base, env, p1);
-		break;
-	      default:
-		ret = from_err_msg("TYPE IS NOT APPLIABLE -- APPLY");
-		break;
-	      }
-	    GUARD_END(p1, g2);
-	    GUARD_END(base, g2);
-	    return ret;
-	  }
-	case 3:			// Binary operator
-	  {
-	    rt_data_t *ret = NULL;
-	    GUARD_DO(base, eval(env, data->_list.list[0]), g3);
-	    GUARD_DO(p1, eval(env, data->_list.list[1]), g3);
-	    GUARD_DO(p2, eval(env, data->_list.list[2]), g3);
-
-	    switch (base->tag) // base is guaranteed to not be ERR
-	      {
-	      case FUNC:
-		ret = base->_func.fptr(env, p1, p2);
-		break;
-	      default:
-		ret = from_err_msg("TYPE IS NOT APPLIABLE -- APPLY");
-		break;
-	      }
-	    GUARD_END(p2, g3);
-	    GUARD_END(p1, g3);
-	    GUARD_END(base, g3);
-	    return ret;
-	  }
-	default:
-	  return from_err_msg("CANNOT INFER LIST CONTEXT -- EVAL");
+	  ret = eval(env, data->_list.list[i + 1]);
+	  if (!ret)
+	    {
+	      ret = from_err_msg("TYPE IS NULL -- init apply");
+	      goto param_error_jmp;
+	    }
+	  if (ret->tag == ERR) goto param_error_jmp;
+	  params->_list.list[i] = ret;
 	}
+      ret = apply(env, base, &params->_list);
+    param_error_jmp:
+      dealloc(&params);
+      GUARD_END(base, apply);
+      return ret;
     default:
-      return from_err_msg("UNRECOGNIZED DATA TAG -- EVAL");
+      return from_err_msg("UNRECOGNIZED DATA TAG -- eval");
     }
 }
 
@@ -284,6 +235,37 @@ eval(rt_env_t *env, rt_data_t *data)
 {
   // Deep copy should be performed upon seeing an atom
   return intern_eval(env, data, true);
+}
+
+rt_data_t *
+apply(rt_env_t *env, rt_data_t *val, rt_list_t *param)
+{
+  switch (val->tag)
+    {
+    case FUNC:
+      if (param == NULL || param->size == 0)
+	{ return val->_func.fptr(env, NULL, NULL); }
+      if (param->size == 1)
+	{ return val->_func.fptr(env, param->list[0], NULL); }
+      if (param->size == 2)
+	{ return val->_func.fptr(env, param->list[0], param->list[1]); }
+      return from_err_msg("CANNOT INFER LIST CONTEXT -- apply");
+    case UDT:
+      if (!val->_udt.apply) break;
+
+      if (param == NULL || param->size == 0)
+	{ return val->_udt.apply(val, env, NULL); }
+      if (param->size == 1)
+	{ return val->_udt.apply(val, env, param->list[0]); }
+      return from_err_msg("CANNOT INFER LIST CONTEXT -- apply");
+    case LIST:
+      if (param == NULL || param->size == 0)
+	{ return eval(env, val); }
+      return from_err_msg("ILLEGAL LIST APPLICATION -- apply");
+    default:
+      break;
+    }
+  return from_err_msg("TYPE IS NOT APPLIABLE -- apply");
 }
 
 #undef GUARD_END

@@ -510,6 +510,7 @@ parse_primitive (parser_info &src)
   // | ATOM
   // | IDENT <<produce>> expression
   // | IDENT
+  // | '(' ')'
   // | '(' ')' <<produce>> expression
   // | '(' <<params>> ')' <<produce>> expression
   // | '(' expression ')'
@@ -547,10 +548,14 @@ parse_primitive (parser_info &src)
     {
       if (optional(src, { mp_token_t::P_RPAREN }))
 	{
-	  mp_token_t op = one_of(src, impl_produce);
-	  return make_binary_expr(from_atom(op.text.c_str()),
-				  alloc_list(0),
-				  parse_expression(src));
+	  mp_token_t op;
+	  if (optional(src, impl_produce, op))
+	    {
+	      return make_binary_expr(from_atom(op.text.c_str()),
+				      alloc_list(0),
+				      parse_expression(src));
+	    }
+	  return alloc_list(0);
 	}
       // Assume it is a function
       mp_token_t p;
