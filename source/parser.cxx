@@ -1,7 +1,5 @@
 #include "parser.hxx"
 
-#include <stdio.h>
-
 parser_info::parser_info(istream_wrapper &_stream)
   : stream(_stream), buf()
 {
@@ -55,6 +53,14 @@ consume(parser_info &src)
 {
   mp_token_t tok = src.get();
   if (tok.type == mp_token_t::S_ERR) throw parser_error(tok);
+  return tok;
+}
+
+mp_token_t
+peek(parser_info &src)
+{
+  auto tok = consume(src);
+  src.unget(tok);
   return tok;
 }
 
@@ -165,224 +171,109 @@ parse_expression(parser_info &src)
       // unget ident, its part of another expression
       src.unget(ident);
     }
-  return parse_lazy(src);
+  return parse_subexpr(src, 0);
 }
 
-rt_data_t *
-parse_lazy (parser_info &src)
+// Parse table for subexpr
+//
+// No precedence should have negative value
+static const std::map<mp_token_t::tok_type, std::array<int, 4>> table
 {
-  // = 'lazy' or
-  // | or
+  { mp_token_t::K_OR,      { 10, 11, 10, true } },
+  { mp_token_t::K_AND,     { 20, 21, 20, true } },
+  { mp_token_t::Y_LT,      { 30, 40, 29, true } },
+  { mp_token_t::Y_GT,      { 30, 40, 29, true } },
+  { mp_token_t::Y_LE,      { 30, 40, 29, true } },
+  { mp_token_t::Y_GE,      { 30, 40, 29, true } },
+  { mp_token_t::Y_EQL,     { 30, 40, 29, true } },
+  { mp_token_t::Y_NEQ,     { 30, 40, 29, true } },
+  { mp_token_t::Y_COLON,   { 40, 40, 39, true } },
+  { mp_token_t::Y_ADD,     { 50, 51, 50, true } },
+  { mp_token_t::Y_SUB,     { 50, 51, 50, true } },
+  { mp_token_t::Y_MUL,     { 60, 61, 60, true } },
+  { mp_token_t::Y_DIV,     { 60, 61, 60, true } },
+  { mp_token_t::K_MOD,     { 60, 61, 60, true } },
+  { mp_token_t::Y_POW,     { 70, 70, 69, true } },
+  { mp_token_t::Y_PERCENT, { 80, -1, 80, false } },
+  { mp_token_t::Y_PERIOD,  { 90, 90, 89, true } },
+};
 
-  mp_token_t tok;
-  if (optional(src, { mp_token_t::K_LAZY }, tok))
+#define GET_PREC(t)						\
+  ((table.find(t) == table.end()) ? -1 : (table.at(t)[0]))
+#define GET_RIGHT_PREC(t)					\
+  ((table.find(t) == table.end()) ? -1 : (table.at(t)[1]))
+#define GET_NEXT_PREC(t)					\
+  ((table.find(t) == table.end()) ? -1 : (table.at(t)[2]))
+#define IS_BINARY(t)						\
+  ((table.find(t) == table.end()) ? -1 : (table.at(t)[3]))
+
+rt_data_t *
+parse_head (parser_info &src)
+{
+  auto tok = consume(src);
+  switch (tok.type)
     {
+    case mp_token_t::K_LAZY:
       return make_unary_expr(from_atom(tok.text.c_str()),
-			     parse_or(src));
-    }
-  return parse_or(src);
-}
-
-rt_data_t *
-parse_or (parser_info &src)
-{
-  // = or 'or' and
-  // | and
-
-  auto lhs = parse_and(src);
-  mp_token_t tok;
-  while (optional(src, { mp_token_t::K_OR }, tok))
-    {
-      lhs = make_binary_expr(from_atom(tok.text.c_str()),
-			     lhs,
-			     parse_and(src));
-    }
-  return lhs;
-}
-
-rt_data_t *
-parse_and (parser_info &src)
-{
-  // = and 'and' rel_like
-  // | rel_like
-
-  auto lhs = parse_rel_like(src);
-  mp_token_t tok;
-  while (optional(src, { mp_token_t::K_AND }, tok))
-    {
-      lhs = make_binary_expr(from_atom(tok.text.c_str()),
-			     lhs,
-			     parse_rel_like(src));
-    }
-  return lhs;
-}
-
-rt_data_t *
-parse_rel_like (parser_info &src)
-{
-  // = cons '<' cons
-  // | cons '>' cons
-  // | cons '<=' cons
-  // | cons '>=' cons
-  // | cons '==' cons
-  // | cons '/=' cons
-  // | cons
-
-  auto lhs = parse_cons(src);
-  mp_token_t tok;
-  if (optional(src, { mp_token_t::Y_LT, mp_token_t::Y_GT, mp_token_t::Y_LE, mp_token_t::Y_GE, mp_token_t::Y_EQL, mp_token_t::Y_NEQ }, tok))
-    {
-      return make_binary_expr(from_atom(tok.text.c_str()),
-			      lhs,
-			      parse_cons(src));
-    }
-  return lhs;
-}
-
-rt_data_t *
-parse_cons (parser_info &src)
-{
-  // = add_like
-  // | add_like ':' cons
-
-  auto tree = parse_add_like(src);
-  mp_token_t tok;
-  if (optional(src, { mp_token_t::Y_COLON }, tok))
-    {
-      return make_binary_expr(from_atom(tok.text.c_str()),
-			      tree,
-			      parse_cons(src));
-    }
-  return tree;
-}
-
-rt_data_t *
-parse_add_like (parser_info &src)
-{
-  // = add_like '+' mul_like
-  // | add_like '-' mul_like
-  // | mul_like
-
-  auto tree = parse_mul_like(src);
-  mp_token_t tok;
-  while (optional(src, { mp_token_t::Y_ADD, mp_token_t::Y_SUB }, tok))
-    {
-      tree = make_binary_expr(from_atom(tok.text.c_str()),
-			      tree,
-			      parse_mul_like(src));
-    }
-  return tree;
-}
-
-rt_data_t *
-parse_mul_like (parser_info &src)
-{
-  // = mul_like '*' prefix
-  // | mul_like '/' prefix
-  // | mul_like 'mod' prefix
-  // | prefix
-
-  auto tree = parse_prefix(src);
-  mp_token_t tok;
-  while (optional(src, { mp_token_t::Y_MUL, mp_token_t::Y_DIV, mp_token_t::K_MOD }, tok))
-    {
-      tree = make_binary_expr(from_atom(tok.text.c_str()),
-			      tree,
-			      parse_prefix(src));
-    }
-  return tree;
-}
-
-rt_data_t *
-parse_prefix (parser_info &src)
-{
-  // = '+' exponent
-  // | '-' exponent
-  // | exponent
-
-  mp_token_t tok;
-  if (optional(src, { mp_token_t::Y_ADD, mp_token_t::Y_SUB }, tok))
-    {
+			     parse_subexpr(src, GET_PREC(mp_token_t::K_OR)));
+    case mp_token_t::Y_ADD:
+    case mp_token_t::Y_SUB:
       return make_unary_expr(from_atom(tok.text.c_str()),
-			     parse_exponent(src));
-    }
-  return parse_exponent(src);
-}
-
-rt_data_t *
-parse_exponent (parser_info &src)
-{
-  // = postfix '^' prefix
-  // | postfix
-
-  auto tree = parse_postfix(src);
-  mp_token_t tok;
-  if (optional(src, { mp_token_t::Y_POW }, tok))
-    {
-      return make_binary_expr(from_atom(tok.text.c_str()),
-			      tree,
-			      parse_prefix(src));
-    }
-  return tree;
-}
-
-rt_data_t *
-parse_postfix (parser_info &src)
-{
-  // = fapply '%'
-  // | fapply
-
-  auto tree = parse_fapply(src);
-  mp_token_t tok;
-  if (optional(src, { mp_token_t::Y_PERCENT }, tok))
-    {
-      return make_unary_expr(from_atom(tok.text.c_str()),
-			     tree);
-    }
-  return tree;
-}
-
-rt_data_t *
-parse_fapply (parser_info &src)
-{
-  // = parse_fapply '(' argument_list ')'
-  // | parse_fapply '(' ')'
-  // | fcompose
-
-  auto tree = parse_fcompose(src);
-  while (optional(src, { mp_token_t::P_LPAREN }))
-    {
-      if (optional(src, { mp_token_t::P_RPAREN }))
+			     parse_subexpr(src, GET_PREC(mp_token_t::Y_MUL)));
+    default:
+      src.unget(tok);
+      auto node = parse_qexpr(src);
+      while (optional(src, { mp_token_t::P_LPAREN }))
 	{
-	  return make_nullary_expr(tree);
+	  if (optional(src, { mp_token_t::P_RPAREN }))
+	    {
+	      return make_nullary_expr(node);
+	    }
+	  auto params = parse_argument_list(src);
+	  one_of(src, { mp_token_t::P_RPAREN });
+	  // f(a, b, c) becomes f(a)(b)(c)
+	  for (size_t i = 0; i < params.size(); ++i)
+	    {
+	      node = make_unary_expr(node, params[i]);
+	    }
 	}
-      auto params = parse_argument_list(src);
-      one_of(src, { mp_token_t::P_RPAREN });
-      // f(a, b, c) becomes f(a)(b)(c)
-      for (size_t i = 0; i < params.size(); ++i)
-	{
-	  tree = make_unary_expr(tree, params[i]);
-	}
+      return node;
     }
-  return tree;
 }
 
 rt_data_t *
-parse_fcompose (parser_info &src)
+parse_subexpr (parser_info &src, int min_prec)
 {
-  // = qexpr '.' fcompose
-  // | qexpr
+  if (min_prec < 0) return NULL;
 
-  auto tree = parse_qexpr(src);
-  mp_token_t tok;
-  if (optional(src, { mp_token_t::Y_PERIOD }, tok))
+  auto lhs = parse_head(src);
+  auto max_prec = std::numeric_limits<int>::max();
+
+  auto tok = peek(src);
+  auto prec = GET_PREC(tok.type);
+
+  while ((min_prec <= prec) && (prec <= max_prec))
     {
-      return make_binary_expr(from_atom(tok.text.c_str()),
-			      tree,
-			      parse_fcompose(src));
+      tok = consume(src);
+      if (IS_BINARY(tok.type))
+	{
+	  auto rhs = parse_subexpr(src, GET_RIGHT_PREC(tok.type));
+	  lhs = make_binary_expr(from_atom(tok.text.c_str()), lhs, rhs);
+	}
+      else lhs = make_unary_expr(from_atom(tok.text.c_str()), lhs);
+      max_prec = GET_NEXT_PREC(tok.type);
+
+      tok = peek(src);
+      prec = GET_PREC(tok.type);
     }
-  return tree;
+
+  return lhs;
 }
+
+#undef IS_BINARY
+#undef GET_NEXT_PREC
+#undef GET_RIGHT_PREC
+#undef GET_PREC
 
 rt_data_t *
 parse_qexpr (parser_info &src)

@@ -5,6 +5,10 @@
 
 #include "rt_utils.h"
 
+#include <map>
+#include <array>
+#include <limits>
+
 #include <memory>
 #include <vector>
 #include <utility>
@@ -56,18 +60,10 @@ std::vector<rt_data_t*> parse_expressions (parser_info &src);
 std::vector<rt_data_t*> parse_argument_list (parser_info &src);
 
 rt_data_t *parse_expression (parser_info &src);
-rt_data_t *parse_lazy (parser_info &src);
-rt_data_t *parse_or (parser_info &src);
-rt_data_t *parse_and (parser_info &src);
-rt_data_t *parse_rel_like (parser_info &src);
-rt_data_t *parse_cons (parser_info &src);
-rt_data_t *parse_add_like (parser_info &src);
-rt_data_t *parse_mul_like (parser_info &src);
-rt_data_t *parse_prefix (parser_info &src);
-rt_data_t *parse_exponent (parser_info &src);
-rt_data_t *parse_postfix (parser_info &src);
-rt_data_t *parse_fapply (parser_info &src);
-rt_data_t *parse_fcompose (parser_info &src);
+
+rt_data_t *parse_head (parser_info &src);
+rt_data_t *parse_subexpr (parser_info &src, int min_prec);
+
 rt_data_t *parse_qexpr (parser_info &src);
 rt_data_t *parse_try_catch (parser_info &src);
 rt_data_t *parse_do_end (parser_info &src);
