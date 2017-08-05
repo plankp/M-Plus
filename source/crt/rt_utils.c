@@ -584,8 +584,12 @@ impl_div(rt_env_t *_env, rt_data_t *a, rt_data_t *b)
 	case CHAR:
 	  switch (b->tag)
 	    {
-	    case CHAR:  return from_char(a->_char.c / b->_char.c);
-	    case INT:   return from_int64(a->_char.c / b->_int.i);
+	    case CHAR:
+	      if (b->_char.c == 0) return from_err_msg("divide by zero");
+	      return from_char(a->_char.c / b->_char.c);
+	    case INT:
+	      if (b->_int.i == 0) return from_err_msg("divide by zero");
+	      return from_int64(a->_char.c / b->_int.i);
 	    case FLOAT: return from_double(a->_char.c / b->_float.f);
 	    default:    break;
 	    }
@@ -593,8 +597,12 @@ impl_div(rt_env_t *_env, rt_data_t *a, rt_data_t *b)
 	case INT:
 	  switch (b->tag)
 	    {
-	    case CHAR:  return from_int64(a->_int.i / b->_char.c);
-	    case INT:   return from_int64(a->_int.i / b->_int.i);
+	    case CHAR:
+	      if (b->_char.c == 0) return from_err_msg("divide by zero");
+	      return from_int64(a->_int.i / b->_char.c);
+	    case INT:
+	      if (b->_int.i == 0) return from_err_msg("divide by zero");
+	      return from_int64(a->_int.i / b->_int.i);
 	    case FLOAT: return from_double(a->_int.i / b->_float.f);
 	    default:    break;
 	    }
@@ -629,8 +637,12 @@ impl_mod(rt_env_t *_env, rt_data_t *a, rt_data_t *b)
 	case CHAR:
 	  switch (b->tag)
 	    {
-	    case CHAR:  return from_char(a->_char.c % b->_char.c);
-	    case INT:   return from_int64(a->_char.c % b->_int.i);
+	    case CHAR:
+	      if (b->_char.c == 0) return from_err_msg("divide by zero");
+	      return from_char(a->_char.c % b->_char.c);
+	    case INT:
+	      if (b->_int.i == 0) return from_err_msg("divide by zero");
+	      return from_char(a->_char.c % b->_int.i);
 	    case FLOAT: return from_double(fmod(a->_char.c, b->_float.f));
 	    default:    break;
 	    }
@@ -638,8 +650,12 @@ impl_mod(rt_env_t *_env, rt_data_t *a, rt_data_t *b)
 	case INT:
 	  switch (b->tag)
 	    {
-	    case CHAR:  return from_int64(a->_int.i % b->_char.c);
-	    case INT:   return from_int64(a->_int.i % b->_int.i);
+	    case CHAR:
+	      if (b->_char.c == 0) return from_err_msg("divide by zero");
+	      return from_char(a->_int.i % b->_char.c);
+	    case INT:
+	      if (b->_int.i == 0) return from_err_msg("divide by zero");
+	      return from_char(a->_int.i % b->_int.i);
 	    case FLOAT: return from_double(fmod(a->_int.i, b->_float.f));
 	    default:    break;
 	    }

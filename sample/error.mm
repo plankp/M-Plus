@@ -4,7 +4,10 @@
 #
 
 try
-  error(10)
+  try
+    10 / 0    # Error thrown here
+  catch -> a
+    error(a)  # Re-throw
 catch -> a do
   print(@"Errored with message ");
   print(a);
