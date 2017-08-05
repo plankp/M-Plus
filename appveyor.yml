@@ -12,7 +12,7 @@ build:
   parallel: true
   verbosity: minimal
 test_script:
-- cmd: build\release\tests.exe
+- cmd: C:\projects\m-plus\build\Release\tests.exe
 artifacts:
 - path: build\release\mplus.exe
   name: MPlus
