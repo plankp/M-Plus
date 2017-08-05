@@ -3,7 +3,6 @@
 #include "lexer.hxx"
 #include "parser.hxx"
 
-#include <chrono>
 #include <fstream>
 
 int
@@ -27,16 +26,17 @@ main (int argc, char **argv)
       istream_wrapper wrap(s);
       parser_info info(wrap);
 
-      auto start = std::chrono::high_resolution_clock::now();
+      // // Uncomment and add #include <chrono> to time the parse routine
+      // auto start = std::chrono::high_resolution_clock::now();
       auto tree = parse(info);
-      std::chrono::duration<double, std::milli> duration = std::chrono::high_resolution_clock::now() - start;
-      printf("Parsing took %gms\n", duration.count());
-      // Uncomment to print tree parse tree!
-      {
-        auto str = expr_to_str(tree);
-        printf("%s\n", str);
-        free(str);
-      }
+      // std::chrono::duration<double, std::milli> duration = std::chrono::high_resolution_clock::now() - start;
+      // printf("Parsing took %gms\n", duration.count());
+      // // Uncomment to print tree parse tree!
+      // {
+      //   auto str = expr_to_str(tree);
+      //   printf("%s\n", str);
+      //   free(str);
+      // }
 
       auto env = new_mp_env(nullptr);
       init_default_env(env);
