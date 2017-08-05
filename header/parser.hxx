@@ -47,12 +47,13 @@ public:
 mp_token_t consume(parser_info &src);
 
 // $type must not be S_ERR (its already handled)
-mp_token_t one_of(parser_info &src, std::vector<mp_token_t::tok_type> types);
+mp_token_t one_of(parser_info &src, mp_token_t::tok_type type);
+mp_token_t one_of(parser_info &src,
+		  const std::vector<mp_token_t::tok_type> &types);
 
 // Reference is not modified (and token is unget-ed) if type is incorrect
-bool optional(parser_info &src, std::vector<mp_token_t::tok_type> types);
-bool optional(parser_info &src, std::vector<mp_token_t::tok_type> types,
-	      mp_token_t &ref);
+bool optional(parser_info &src, mp_token_t::tok_type type);
+bool optional(parser_info &src, mp_token_t::tok_type type, mp_token_t &ref);
 
 rt_data_t *parse (parser_info &src);
 
@@ -60,14 +61,7 @@ std::vector<rt_data_t*> parse_expressions (parser_info &src);
 std::vector<rt_data_t*> parse_argument_list (parser_info &src);
 
 rt_data_t *parse_expression (parser_info &src);
-
 rt_data_t *parse_head (parser_info &src);
 rt_data_t *parse_subexpr (parser_info &src, int min_prec);
-
-rt_data_t *parse_qexpr (parser_info &src);
-rt_data_t *parse_try_catch (parser_info &src);
-rt_data_t *parse_do_end (parser_info &src);
-rt_data_t *parse_if_expr (parser_info &src);
-rt_data_t *parse_primitive (parser_info &src);
 
 #endif /* !_MP_PARSER_HXX__ */

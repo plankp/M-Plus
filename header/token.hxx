@@ -11,54 +11,61 @@
  *  K_ - Keyword
  *  P_ - Pair (symbols that have a begin and end: brackets)
  *  Y_ - Symbol (encompases everything else)
+ *
+ * X(TOKEN NAME, PREC, RIGHT PREC, NEXT PREC, IS BINARY)
+ *   If any of the fields are not applicable, fill in -1 (IS BINARY is 0)
+ * XN(TOKEN NAME)
+ *   The other fields auto fill to -1
  */
 #define MP_TOKEN_TYPES				\
-  X(S_EOF)					\
-  X(S_ERR)					\
-  X(L_ATOM)					\
-  X(L_NUMBER)					\
-  X(L_IDENT)					\
-  X(P_LCURL)					\
-  X(P_RCURL)					\
-  X(P_LSQUARE)					\
-  X(P_RSQUARE)					\
-  X(P_LPAREN)					\
-  X(P_RPAREN)					\
-  X(K_MOD)					\
-  X(K_IF)					\
-  X(K_ELSE)					\
-  X(K_AND)					\
-  X(K_OR)					\
-  X(K_DO)					\
-  X(K_END)					\
-  X(K_LAZY)					\
-  X(K_TRY)					\
-  X(K_CATCH)					\
-  X(Y_ADD)					\
-  X(Y_SUB)					\
-  X(Y_MUL)					\
-  X(Y_DIV)					\
-  X(Y_POW)					\
-  X(Y_PERCENT)					\
-  X(Y_QEXPR)					\
-  X(Y_COLON)					\
-  X(Y_SEMI)					\
-  X(Y_COMMA)					\
-  X(Y_PERIOD)					\
-  X(Y_SET)					\
-  X(Y_DECL)					\
-  X(Y_YIELD)					\
-  X(Y_LT)					\
-  X(Y_GT)					\
-  X(Y_LE)					\
-  X(Y_GE)					\
-  X(Y_EQL)					\
-  X(Y_NEQ)
+  X(K_OR,      10, 11, 10, 1)			\
+  X(K_AND,     20, 21, 20, 1)			\
+  X(Y_LT,      30, 40, 29, 1)			\
+  X(Y_GT,      30, 40, 29, 1)			\
+  X(Y_LE,      30, 40, 29, 1)			\
+  X(Y_GE,      30, 40, 29, 1)			\
+  X(Y_EQL,     30, 40, 29, 1)			\
+  X(Y_NEQ,     30, 40, 29, 1)			\
+  X(Y_COLON,   40, 40, 39, 1)			\
+  X(Y_ADD,     50, 51, 50, 1)			\
+  X(Y_SUB,     50, 51, 50, 1)			\
+  X(Y_MUL,     60, 61, 60, 1)			\
+  X(Y_DIV,     60, 61, 60, 1)			\
+  X(K_MOD,     60, 61, 60, 1)			\
+  X(Y_POW,     70, 70, 69, 1)			\
+  X(Y_PERCENT, 80, -1, 80, 0)			\
+  X(Y_PERIOD,  90, 90, 89, 1)			\
+  XN(S_EOF)					\
+  XN(S_ERR)					\
+  XN(L_ATOM)					\
+  XN(L_NUMBER)					\
+  XN(L_IDENT)					\
+  XN(P_LCURL)					\
+  XN(P_RCURL)					\
+  XN(P_LSQUARE)					\
+  XN(P_RSQUARE)					\
+  XN(P_LPAREN)					\
+  XN(P_RPAREN)					\
+  XN(K_IF)					\
+  XN(K_ELSE)					\
+  XN(K_DO)					\
+  XN(K_END)					\
+  XN(K_LAZY)					\
+  XN(K_TRY)					\
+  XN(K_CATCH)					\
+  XN(Y_QEXPR)					\
+  XN(Y_SEMI)					\
+  XN(Y_COMMA)					\
+  XN(Y_SET)					\
+  XN(Y_DECL)					\
+  XN(Y_YIELD)
 
 struct mp_token_t
 {
-#define X(n) n,
+#define X(n, a, b, c, d) n,
+#define XN(n) n,
   enum tok_type { /* Macro expansion here */ MP_TOKEN_TYPES } type;
+#undef XN
 #undef X
   size_t line_num;
   size_t col_num;

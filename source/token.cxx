@@ -3,9 +3,11 @@
 std::string
 to_string (const mp_token_t::tok_type &ref)
 {
-#define X(n) case mp_token_t::n: return #n;
+#define X(n, a, b, c, d) case mp_token_t::n: return #n;
+#define XN(n) case mp_token_t::n: return #n;
   switch (ref)
     { /* Macro expansion here! */ MP_TOKEN_TYPES }
+#undef XN
 #undef X
   // Returns an empty string by default
   return "";
