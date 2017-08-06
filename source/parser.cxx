@@ -21,7 +21,8 @@ parser_info::peek(void)
 mp_token_t
 parser_info::get(void)
 {
-  if (buf.empty()) return next_token(stream);
+  if (buf.empty())
+    { return next_token(stream); }
   mp_token_t tok = buf.back();
   buf.pop_back();
   return tok;
@@ -39,7 +40,8 @@ gen_err_msg(mp_token_t tok, const std::string &msg)
 {
   std::stringstream sstr;
   sstr << "Found " << to_string(tok) << " when parsing";
-  if (!msg.empty()) sstr << ": " << msg;
+  if (not msg.empty())
+    { sstr << ": " << msg; }
   return sstr.str();
 }
 
@@ -52,7 +54,8 @@ mp_token_t
 consume(parser_info &src)
 {
   mp_token_t tok = src.get();
-  if (tok.type == mp_token_t::S_ERR) throw parser_error(tok);
+  if (tok.type == mp_token_t::S_ERR)
+    { throw parser_error(tok); }
   return tok;
 }
 
@@ -68,7 +71,8 @@ mp_token_t
 one_of(parser_info &src, mp_token_t::tok_type type)
 {
   mp_token_t tok = consume(src);
-  if (tok.type == type) return tok;
+  if (tok.type == type)
+    { return tok; }
 
   // Construct error msg
   std::stringstream sstr;
@@ -84,16 +88,19 @@ one_of(parser_info &src, const std::vector<mp_token_t::tok_type> &types)
 			  [&tok](mp_token_t::tok_type type){
 			    return type == tok.type;
 			  });
-  if (res != std::end(types)) return tok;
+  if (res != std::end(types))
+    { return tok; }
 
   // Construct error msg
   std::stringstream sstr;
   sstr << "Expected ";
-  if (types.size() == 1) sstr << to_string(types[0]);
+  if (types.size() == 1)
+    { sstr << to_string(types[0]); }
   else
     {
       sstr << "one of";
-      for (const auto &el : types) sstr << ' ' << to_string(el);
+      for (const auto &el : types)
+	{ sstr << ' ' << to_string(el); }
     }
   throw parser_error(tok, sstr.str());
 }
@@ -124,12 +131,14 @@ parse(parser_info &src)
   auto tree = parse_expressions(src);
   one_of(src, mp_token_t::S_EOF);
 
-  if (tree.size() == 1) return tree[0];
+  if (tree.size() == 1)
+    { return tree[0]; }
 
   // assume its a do-end expression
   tree.insert(tree.begin(), from_atom("do"));
   auto ret = from_list(tree.size(), tree.data());
-  for (size_t i = 0; i < tree.size(); ++i) dealloc(&tree[i]);
+  for (size_t i = 0; i < tree.size(); ++i)
+    { dealloc(&tree[i]); }
   return ret;
 }
 
@@ -140,7 +149,8 @@ parse_expressions (parser_info &src)
   // | expression ';' expressions
 
   std::vector<rt_data_t*> vec;
-  do vec.push_back(parse_expression(src));
+  do
+    { vec.push_back(parse_expression(src)); }
   while (optional(src, mp_token_t::Y_SEMI));
   return vec;
 }
@@ -152,7 +162,8 @@ parse_argument_list (parser_info &src)
   // | expression ',' argument_list
 
   std::vector<rt_data_t*> vec;
-  do vec.push_back(parse_expression(src));
+  do
+    { vec.push_back(parse_expression(src)); }
   while (optional(src, mp_token_t::Y_COMMA));
   return vec;
 }
@@ -279,7 +290,8 @@ parse_trail_cond (parser_info &src)
 	{
 	  tree.push_back(make_unary_expr(parse_expression(src),
 					 expr));
-	  if (optional(src, mp_token_t::Y_COMMA)) continue;
+	  if (optional(src, mp_token_t::Y_COMMA))
+	    { continue; }
 	  break;
 	}
       // else clause
@@ -347,7 +359,8 @@ parse_head (parser_info &src)
 rt_data_t *
 parse_subexpr (parser_info &src, int min_prec)
 {
-  if (min_prec < 0) return NULL;
+  if (min_prec < 0)
+    { return NULL; }
 
   auto lhs = parse_head(src);
   auto max_prec = std::numeric_limits<int>::max();
@@ -385,7 +398,8 @@ conv_ll(const std::string& text)
   if (text[0] == '0')
     {
       // Either its zero or it has a different base
-      if (text.size() == 1) return 0;
+      if (text.size() == 1)
+	{ return 0; }
       switch (text[1])
 	{
 	case 'b': return std::stoll(text.substr(2), nullptr, 2);
@@ -404,14 +418,18 @@ std::string
 remove_clutter(const std::string &str)
 {
   // Just in case, should never happen!
-  if (str.length() == 0) return "";
+  if (str.length() == 0)
+    { return ""; }
 
   // Atom with length of 1 must be @
-  if (str.length() == 1) return "";
+  if (str.length() == 1)
+    { return ""; }
   // Atom with lrngth of 2 must be @<char>
-  if (str.length() == 2) return std::string(1, str[1]);
+  if (str.length() == 2)
+    { return std::string(1, str[1]); }
   // @"<str?>"
-  if (str[1] == '"') return str.substr(2, str.size() - 3);
+  if (str[1] == '"')
+    { return str.substr(2, str.size() - 3); }
   // @<str>
   return str.substr(1);
 }
@@ -441,7 +459,8 @@ parse_trail_prim (parser_info &src, mp_token_t init)
     {
     case mp_token_t::P_LSQUARE:
       {
-	if (optional(src, mp_token_t::P_RSQUARE)) return alloc_array(0);
+	if (optional(src, mp_token_t::P_RSQUARE))
+	  { return alloc_array(0); }
 	auto datum = parse_argument_list(src);
       
 	mp_token_t tok = one_of(src, mp_token_t::P_RSQUARE);
@@ -480,7 +499,8 @@ parse_trail_prim (parser_info &src, mp_token_t init)
 		// => (-> (a ...) <<expr>>)
 		std::vector<mp_token_t> ps;
 		ps.push_back(p);
-		do ps.push_back(one_of(src, mp_token_t::L_IDENT));
+		do
+		  { ps.push_back(one_of(src, mp_token_t::L_IDENT)); }
 		while (optional(src, mp_token_t::Y_COMMA));
 		one_of(src, mp_token_t::P_RPAREN);
 		mp_token_t op = one_of(src, mp_token_t::Y_YIELD);

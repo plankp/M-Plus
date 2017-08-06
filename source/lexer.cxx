@@ -87,7 +87,7 @@ next_token (istream_wrapper &src)
 	case '\n':
 	  break;
 	case '#':
-	  while (!is_comment_end(src.get())) {
+	  while (not is_comment_end(src.get())) {
 	    ; // Just continue consuming
 	  }
 	  break;
@@ -230,12 +230,14 @@ next_opt_ident (istream_wrapper &src, std::stringstream &buf)
   for (;;)
     {
       ch = src.get();
-      if (is_ident(ch)) buf << static_cast<char>(ch);
+      if (is_ident(ch))
+	{ buf << static_cast<char>(ch); }
       else break;
     }
 
   // ch now must be either ?, !, or something for another cycle to process
-  if (ch == '?' || ch == '!') buf << static_cast<char>(ch);
+  if (ch == '?' || ch == '!')
+    { buf << static_cast<char>(ch); }
   else src.unget(ch);
 }
 
@@ -257,7 +259,8 @@ next_symbol (istream_wrapper &src)
 {
   std::stringstream stream;
   int ch = src.get();
-  if (ch == EOF) return create_eof_token(src);
+  if (ch == EOF)
+    { return create_eof_token(src); }
   if (is_ident(ch))
     {
       stream << static_cast<char>(ch);
@@ -297,12 +300,12 @@ next_zero_number (istream_wrapper &src, std::stringstream &sstr)
     }
 
   if (pred)
-    do
-      {
-	sstr << static_cast<char>(ch);
-	ch = src.get();
-      }
-    while (pred(ch));
+    { do
+	{
+	  sstr << static_cast<char>(ch);
+	  ch = src.get();
+	}
+      while (pred(ch)); }
   src.unget(ch);
 }
 
