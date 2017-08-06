@@ -40,7 +40,7 @@ gen_err_msg(mp_token_t tok, const std::string &msg)
 {
   std::stringstream sstr;
   sstr << "Found " << to_string(tok) << " when parsing";
-  if (not msg.empty())
+  if (msg.empty() == false)
     { sstr << ": " << msg; }
   return sstr.str();
 }

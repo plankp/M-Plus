@@ -17,7 +17,7 @@ main (int argc, char **argv)
   try
     {
       std::ifstream s(argv[1], std::ios::in);
-      if (not s.is_open())
+      if (s.is_open() == false)
 	{
 	  fprintf(stderr, "File %s cannot be read\n", argv[1]);
 	  return 2;

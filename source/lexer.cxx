@@ -87,7 +87,7 @@ next_token (istream_wrapper &src)
 	case '\n':
 	  break;
 	case '#':
-	  while (not is_comment_end(src.get())) {
+	  while (is_comment_end(src.get()) == false) {
 	    ; // Just continue consuming
 	  }
 	  break;
